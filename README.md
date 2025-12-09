@@ -1,98 +1,177 @@
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+  <img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" />
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+<h1 align="center">
+📦 SISTEMA DE FACTURACIÓN — BACKEND & FRONTEND
+</h1>
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
+<p align="center">
+  <i>Gestión integral de ventas, remitos, clientes, cuentas corrientes, caja y proveedores</i>
 </p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+<p align="center">
+  <img src="https://img.shields.io/badge/NestJS-v10-DD0031?logo=nestjs&logoColor=white" />
+  <img src="https://img.shields.io/badge/Next.js-14-000000?logo=next.js&logoColor=white" />
+  <img src="https://img.shields.io/badge/TypeORM-DataMapper-F29111?logo=database&logoColor=white" />
+  <img src="https://img.shields.io/badge/TypeScript-v5-3178C6?logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/PostgreSQL-15-336791?logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/License-MIT-28A745?logo=open-source-initiative&logoColor=white" />
+</p>
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+------------------------------------------------------------------------
 
-## Project setup
+# Sistema de Facturación, Ventas y Gestión Comercial
 
-```bash
-$ npm install
-```
+Plataforma completa para administrar **ventas**, **remitos**,
+**clientes**, **fiados**, **proveedores**, **caja**, **cuentas a
+pagar**, impresión A4/Media A4 y reportes.\
+Desarrollada con **NestJS + TypeORM + PostgreSQL** y **Next.js (App
+Router)**.
 
-## Compile and run the project
+------------------------------------------------------------------------
 
-```bash
-# development
-$ npm run start
+## 🚀 Arquitectura General
 
-# watch mode
-$ npm run start:dev
+### **Frontend**
 
-# production mode
-$ npm run start:prod
-```
+-   Next.js (App Router)
+-   Tailwind CSS
+-   Headless UI / Radix
+-   TanStack Table & Charts
+-   React Query / RTK Query
+-   Mobile-first
+-   Vista previa e impresión HTML A4 / Media A4
 
-## Run tests
+### **Backend**
 
-```bash
-# unit tests
-$ npm run test
+-   NestJS modular
+-   TypeORM + PostgreSQL
+-   JWT + RBAC (roles)
+-   Auditoría, logs y transacciones
+-   Swagger para documentación
+-   Plantillas HTML/CSS para impresión
 
-# e2e tests
-$ npm run test:e2e
+------------------------------------------------------------------------
 
-# test coverage
-$ npm run test:cov
-```
+## 🧩 Módulos del Sistema
 
-## Deployment
+  -----------------------------------------------------------------------
+  Módulo                            Función
+  --------------------------------- -------------------------------------
+  **Ventas y Remitos**              Registro de ventas, confirmación,
+                                    pagos y emisión de remitos
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+  **Clientes y Fiados**             Gestión de cuentas corrientes, pagos
+                                    parciales y saldos
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+  **Caja**                          Apertura/cierre, ingresos, egresos y
+                                    arqueo
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+  **Proveedores**                   Deudas, pagos y conciliación de
+                                    saldos
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+  **Usuarios & Seguridad**          Roles, permisos y auditoría
 
-## Resources
+  **Impresión**                     Plantillas A4/Media A4 y cola de
+                                    impresión
+  -----------------------------------------------------------------------
 
-Check out a few resources that may come in handy when working with NestJS:
+------------------------------------------------------------------------
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## 🗄️ Modelo de Datos (Resumen)
 
-## Support
+Incluye entidades principales como:\
+`Sale`, `SaleItem`, `Remito`, `Customer`, `CustomerDebt`, `Payment`,
+`CashSession`, `SupplierDebt`, `SupplierPayment`, `User`, `Role`,
+`AuditLog`, entre otros.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+------------------------------------------------------------------------
 
-## Stay in touch
+## 🔄 Flujos Operativos
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### **Ventas**
 
-## License
+1.  Crear venta (draft)\
+2.  Confirmar → pago total/parcial o deuda\
+3.  Opcional: generar remito\
+4.  Imprimir A4 / Media A4
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### **Caja**
+
+-   Abrir caja\
+-   Movimientos (ventas, pagos, egresos, proveedores)\
+-   Cierre y conciliación
+
+### **Proveedores**
+
+-   Registrar deuda\
+-   Registrar pago\
+-   Asignación de montos\
+-   Conciliar → saldo cero
+
+------------------------------------------------------------------------
+
+## 📡 API --- Endpoints Principales
+
+### Ventas
+
+    POST /sales
+    POST /sales/{id}/confirm
+    POST /sales/{id}/remito
+    POST /sales/{id}/payments
+    GET  /sales/{id}/remito
+    POST /remitos/{id}/print
+
+### Clientes
+
+    GET/POST /customers
+    GET /customers/{id}/debts
+    POST /customers/{id}/payments
+
+### Caja
+
+    POST /cash/sessions/open
+    POST /cash/sessions/{id}/close
+    GET  /cash/sessions/{id}/movements
+    POST /cash/movements
+
+### Proveedores
+
+    GET/POST /suppliers
+    GET /suppliers/{id}/debts
+    POST /suppliers/{id}/payments
+
+------------------------------------------------------------------------
+
+## 🧠 Reglas de Negocio
+
+-   Validación de límite de crédito en fiados\
+-   Pagos parciales sin superar saldo\
+-   Caja abierta obligatoria para ventas/pagos\
+-   Prevención de cierre doble\
+-   Impresión adaptativa según contenido\
+-   Roles: ventas, caja y admin
+
+------------------------------------------------------------------------
+
+## 🛠 Consideraciones Técnicas
+
+-   Transacciones atómicas\
+-   Optimistic locking\
+-   Auditoría detallada\
+-   Paginación y performance\
+-   Tests E2E\
+-   Backups diarios + migraciones versionadas
+
+------------------------------------------------------------------------
+
+## 📄 Licencia
+
+MIT --- libre para uso personal y comercial.
+
+------------------------------------------------------------------------
+
+## 🧩 Contribuciones
+
+¡Pull requests y mejoras son bienvenidas!
