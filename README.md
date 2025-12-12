@@ -166,12 +166,3 @@ Incluye entidades principales como:\
 
 ------------------------------------------------------------------------
 
-## 📄 Licencia
-
-MIT --- libre para uso personal y comercial.
-
-------------------------------------------------------------------------
-
-## 🧩 Contribuciones
-
-¡Pull requests y mejoras son bienvenidas!

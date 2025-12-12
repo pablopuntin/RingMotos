@@ -1,71 +1,70 @@
 // // @ts-check
 // import eslint from '@eslint/js';
-// import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
-// import globals from 'globals';
 // import tseslint from 'typescript-eslint';
+// import prettier from 'eslint-plugin-prettier/recommended';
+// import globals from 'globals';
 
 // export default tseslint.config(
 //   {
-//     ignores: ['eslint.config.mjs'],
+//     ignores: ['dist', 'node_modules'],
 //   },
+
+//   // Reglas recomendadas de JS
 //   eslint.configs.recommended,
+
+//   // Reglas recomendadas de TS + análisis de tipos
 //   ...tseslint.configs.recommendedTypeChecked,
-//   eslintPluginPrettierRecommended,
+
+//   // Integración con Prettier
+//   prettier,
+
 //   {
 //     languageOptions: {
-//       globals: {
-//         ...globals.node,
-//         ...globals.jest,
-//       },
-//       sourceType: 'commonjs',
 //       parserOptions: {
-//         projectService: true,
+//         project: ['./tsconfig.json'],   // ESTA LÍNEA ES CLAVE
 //         tsconfigRootDir: import.meta.dirname,
 //       },
-//     },
+//       globals: {
+//         ...globals.node,
+//       }
+//     }
 //   },
+
 //   {
 //     rules: {
 //       '@typescript-eslint/no-explicit-any': 'off',
 //       '@typescript-eslint/no-floating-promises': 'warn',
 //       '@typescript-eslint/no-unsafe-argument': 'warn'
-//     },
-//   },
+//     }
+//   }
 // );
 
-//refactor
 // @ts-check
 import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import prettier from 'eslint-plugin-prettier/recommended';
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
+import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['dist', 'node_modules'],
+    ignores: ['eslint.config.mjs'],
   },
-
-  // Reglas recomendadas de JS
   eslint.configs.recommended,
-
-  // Reglas recomendadas de TS + análisis de tipos
   ...tseslint.configs.recommendedTypeChecked,
-
-  // Integración con Prettier
-  prettier,
-
+  eslintPluginPrettierRecommended,
   {
     languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.json'],   // ESTA LÍNEA ES CLAVE
-        tsconfigRootDir: import.meta.dirname,
-      },
       globals: {
         ...globals.node,
+        ...globals.jest,
+      },
+      sourceType: 'commonjs',
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
       },
     },
   },
-
   {
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',

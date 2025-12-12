@@ -1,5 +1,5 @@
-import { 
-  Entity, 
+import {
+  Entity,
   PrimaryGeneratedColumn, 
   Column, 
   ManyToMany, 
@@ -42,7 +42,7 @@ export class User {
   @ApiProperty({
     example: 'hashed_password_123',
     description: 'Contraseña del usuario (solo si es autenticación interna)',
-    nullable: true,
+    nullable: true
   })
   @Column({ nullable: true })
   password?: string;
@@ -68,5 +68,4 @@ export class User {
     inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
   })
   roles: Role[];
-
 }

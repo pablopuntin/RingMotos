@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { InitialSeeder } from './common/seeds/seed.superadmin';
 import { User } from './user/entities/user.entity';
 import { Role } from './user/entities/role.entity';
+import { ClientModule } from './client/client.module';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { Role } from './user/entities/role.entity';
 
       TypeOrmModule.forFeature([User, Role]),
     UserModule,
-    AuthModule
+    AuthModule,
+    ClientModule
   ],
   providers: [InitialSeeder]
 })

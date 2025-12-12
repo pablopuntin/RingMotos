@@ -117,15 +117,6 @@ remove(
 }
 
 
-// //hacer admin
-//    @AuthSwagger()
-// @UseGuards(AuthGuard('jwt'))
-// @Roles('superadmin')
-// @ApiOperation({ summary: 'Dar rol de administrador a un usuario' })
-// @Put(':id/makeAdmin')
-// makeAdmin(@Param('id', ParseUUIDPipe) id: string) {
-//   return this.usersService.makeAdmin(id);
-// }
 
   @Patch('reset-password/:id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -136,11 +127,8 @@ remove(
   async resetPassword(
     @Param('id') id: string,
     @Body() body: ResetPasswordDto,
-    @Req() req,
+    @Req() req
   ) {
     return this.userService.resetPasswordAsSuperadmin(id, body.newPassword, req.user);
- 
   }
-
-
   }

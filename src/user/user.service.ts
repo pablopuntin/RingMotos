@@ -1,39 +1,10 @@
-// import { Injectable } from '@nestjs/common';
-// import { CreateUserDto } from './dto/create-user.dto';
-// import { UpdateUserDto } from './dto/update-user.dto';
-
-// @Injectable()
-// export class UserService {
-//   create(createUserDto: CreateUserDto) {
-//     return 'This action adds a new user';
-//   }
-
-//   findAll() {
-//     return `This action returns all user`;
-//   }
-
-//   findOne(id: number) {
-//     return `This action returns a #${id} user`;
-//   }
-
-//   update(id: number, updateUserDto: UpdateUserDto) {
-//     return `This action updates a #${id} user`;
-//   }
-
-//   remove(id: number) {
-//     return `This action removes a #${id} user`;
-//   }
-// }
-
-
-//service de India Taila
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { Role } from './entities/role.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-import * as bcrypt from 'bcrypt'
+import * as bcrypt from 'bcrypt';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 
 // ref
 @Injectable()
@@ -43,11 +14,10 @@ export class UserService {
     private readonly userRepository: Repository<User>,
 
     @InjectRepository(Role)
-    private readonly roleRepository: Repository<Role>,
+    private readonly roleRepository: Repository<Role>
   ) {}
 
- 
- async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto) {
   const { email, password, firstname, lastname} = createUserDto;
 
   const existing = await this.userRepository.findOne({ where: { email } });
@@ -167,43 +137,7 @@ async remove(id: string, currentUser: any) {
 }
 
 
-// async makeAdmin(id: string) {
-//     const user = await this.userRepository.findOne({
-//       where: { id },
-//       relations: ['roles'],
-//     });
-
-//     if (!user) {
-//       throw new NotFoundException(`No existe usuario con id ${id}`);
-//     }
-
-//     // Buscar el rol de admin
-//     const adminRole = await this.roleRepository.findOne({
-//       where: { name: 'admin' },
-//     });
-
-//     if (!adminRole) {
-//       throw new BadRequestException(
-//         'No existe el rol "admin" en la base de datos. Debe crearse primero.',
-//       );
-//     }
-
-//     // Verificar si ya tiene ese rol
-//     const alreadyAdmin = user.roles.some((r) => r.name === 'admin');
-//     if (alreadyAdmin) {
-//       throw new BadRequestException('El usuario ya tiene el rol de administrador.');
-//     }
-
-//     // Agregar el rol admin
-//    user.roles = [adminRole];
-//     const updatedUser = await this.userRepository.save(user);
-
-//     // Remover password antes de devolver
-//     const { password, ...safeUser } = updatedUser;
-//     return safeUser;
-//   }
-
-  //hasta aca funcionaba bien-cambiar pass de admin
+ //hasta aca funcionaba bien-cambiar pass de admin
   async resetPasswordAsSuperadmin(
   targetUserId: string,
   newPassword: string,
