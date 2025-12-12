@@ -2,12 +2,13 @@ import {
   Entity,
   PrimaryGeneratedColumn, 
   Column, 
-  ManyToMany, 
-  JoinTable, 
-  DeleteDateColumn
+  DeleteDateColumn,
+  OneToMany,
+  ManyToOne
 } from 'typeorm';
 import { Role } from './role.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import { CashRegister } from 'src/cash-register/entities/cash-register.entity';
 
 @Entity('user')
 export class User {
@@ -61,11 +62,25 @@ export class User {
     type: () => [Role],
     description: 'Lista de roles asociados al usuario',
   })
-  @ManyToMany(() => Role, (role) => role.users, { eager: true })
-  @JoinTable({
-    name: 'user_roles',
-    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
-  })
-  roles: Role[];
+  // @ManyToMany(() => Role, (role) => role.users, { eager: true })
+  // @JoinTable({
+  //   name: 'user_roles',
+  //   joinColumn: { name: 'user_id', referencedColumnName: 'id' },
+  //   inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
+  // })
+  // roles: Role[];
+
+  @ManyToOne(() => Role, role => role.users)
+role: Role;
+
+
+@OneToMany(() => CashRegister, cr => cr.user)
+cashRegisters: CashRegister[];
+
+
+  // @OneToMany(() => Payment, p => p.receivedBy)
+  // payments: Payment[];
+
+  // @OneToMany(() => SupplierPayment, sp => sp.user)
+  // supplierPayments: SupplierPayment[];
 }

@@ -8,6 +8,11 @@ import { InitialSeeder } from './common/seeds/seed.superadmin';
 import { User } from './user/entities/user.entity';
 import { Role } from './user/entities/role.entity';
 import { ClientModule } from './client/client.module';
+import { CashRegisterModule } from './cash-register/cash-register.module';
+import { CashMovementModule } from './cash-movement/cash-movement.module';
+import { CashMovement } from './cash-movement/entities/cash-movement.entity';
+import { CashRegister } from './cash-register/entities/cash-register.entity';
+import { Client } from './client/entities/client.entity';
 
 @Module({
   imports: [
@@ -21,10 +26,12 @@ import { ClientModule } from './client/client.module';
       useFactory: getTypeOrmConfig
     }),
 
-      TypeOrmModule.forFeature([User, Role]),
+      TypeOrmModule.forFeature([User, Role, CashMovement, CashRegister, Client]),
     UserModule,
     AuthModule,
-    ClientModule
+    ClientModule,
+    CashRegisterModule,
+    CashMovementModule
   ],
   providers: [InitialSeeder]
 })

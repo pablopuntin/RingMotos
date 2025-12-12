@@ -32,7 +32,7 @@ export class Role {
   name: string;
 
   @ApiProperty({ description: 'Descripción del rol', example: 'Acceso completo al sistema' })
-  @Column()
+  @Column({nullable: true })
   description: string;
 
   // @ApiProperty({ description: 'Permisos en formato JSONB' })
