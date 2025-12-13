@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
 import { Entity } from 'typeorm';
+import { Sale } from 'src/sale/entities/sale.entity';
+import { AccountEntry } from 'src/acount-entry/entities/acount-entry.entity';
+import { OneToMany } from 'typeorm';
 
 @Entity()
 export class Client {
@@ -42,8 +45,25 @@ phone: number;
 @Column({unique: true})
 email: string;
 
+  @ApiProperty({
+    description: "Deuda total del cliente almacenada en caché",
+    example: 1500.75
+  })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  totalDebtCache: number;
 
-//totalDebtCache
-//createdAt
+  @ApiProperty({
+    description: "Fecha de creación del registro",
+    example: "2025-12-12T20:10:00.000Z"
+  })
+  @CreateDateColumn()
+  createdAt: Date;
+
+  // Relaciones
+@OneToMany(() => Sale, (sale) => sale.client)
+sales: Sale[];
+
+@OneToMany(() => AccountEntry, (accountEntry) => accountEntry.client)
+accountEntries: AccountEntry[];
 
 }

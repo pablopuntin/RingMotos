@@ -13,6 +13,18 @@ import { CashMovementModule } from './cash-movement/cash-movement.module';
 import { CashMovement } from './cash-movement/entities/cash-movement.entity';
 import { CashRegister } from './cash-register/entities/cash-register.entity';
 import { Client } from './client/entities/client.entity';
+import { SaleModule } from './sale/sale.module';
+import { SaleItemModule } from './sale-item/sale-item.module';
+import { RemitoModule } from './remito/remito.module';
+import { PaymentModule } from './payment/payment.module';
+import { PaymentAllocationModule } from './payment-allocation/payment-allocation.module';
+import { AcountEntryModule } from './acount-entry/acount-entry.module';
+import { SupplierModule } from './supplier/supplier.module';
+import { PurchaseModule } from './purchase/purchase.module';
+import { PurchaseItemModule } from './purchase-item/purchase-item.module';
+import { SupplierPaymentModule } from './supplier-payment/supplier-payment.module';
+import { SupplierAccountEntryModule } from './supplier-account-entry/supplier-account-entry.module';
+import { Sale } from './sale/entities/sale.entity';
 
 @Module({
   imports: [
@@ -26,12 +38,23 @@ import { Client } from './client/entities/client.entity';
       useFactory: getTypeOrmConfig
     }),
 
-      TypeOrmModule.forFeature([User, Role, CashMovement, CashRegister, Client]),
+    TypeOrmModule.forFeature([User, Role, CashMovement, CashRegister, Client]),
     UserModule,
     AuthModule,
     ClientModule,
     CashRegisterModule,
-    CashMovementModule
+    CashMovementModule,
+    SaleModule,
+    SaleItemModule,
+    RemitoModule,
+    PaymentModule,
+    PaymentAllocationModule,
+    AcountEntryModule,
+    SupplierModule,
+    PurchaseModule,
+    PurchaseItemModule,
+    SupplierPaymentModule,
+    SupplierAccountEntryModule
   ],
   providers: [InitialSeeder]
 })
