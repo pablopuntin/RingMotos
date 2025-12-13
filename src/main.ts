@@ -9,7 +9,7 @@ async function bootstrap() {
 // console.log("=====================");
 
   const app = await NestFactory.create(AppModule);
-  
+
   const config = new DocumentBuilder()
     .setTitle('Ring Motos API')
     .setDescription('API desarrollada con NestJS — autenticación, roles y módulos dinámicos.')
@@ -20,6 +20,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(process.env.PORT ?? 4000);
+  await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
