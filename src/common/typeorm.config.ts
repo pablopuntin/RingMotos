@@ -26,17 +26,20 @@
 import { ConfigService } from "@nestjs/config";
 import { TypeOrmModuleOptions } from "@nestjs/typeorm";
 
-export const getTypeOrmConfig = (
-  configService: ConfigService,
-): TypeOrmModuleOptions => ({
-  type: 'postgres',
-  url: configService.get<string>('DATABASE_URL'),
+export const getTypeOrmConfig = (configService: ConfigService) => {
+  const url = configService.get<string>('DATABASE_URL');
 
-  autoLoadEntities: true,
-  synchronize: true,
-  logging: false,
+  console.log('DATABASE_URL:', url); // 👈 DEBUG REAL
 
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
+  if (!url) {
+    throw new Error('❌ DATABASE_URL NOT FOUND');
+  }
+
+  return {
+    type: 'postgres',
+    url,
+    autoLoadEntities: true,
+    synchronize: true,
+    ssl: { rejectUnauthorized: false },
+  };
+};
