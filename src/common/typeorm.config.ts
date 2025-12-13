@@ -1,4 +1,31 @@
-// // src/config/typeorm.config.ts
+src/config/typeorm.config.ts
+import { ConfigService } from '@nestjs/config';
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+
+export const getTypeOrmConfig = (
+  configService: ConfigService,
+): TypeOrmModuleOptions => ({
+  type: 'postgres',
+
+  host: configService.get<string>('DB_HOST'),
+  port: configService.get<number>('DB_PORT'),
+  username: configService.get<string>('DB_USER'),
+  password: configService.get<string>('DB_PASSWORD'),
+  database: configService.get<string>('DB_NAME'),
+
+  autoLoadEntities: true,
+
+  synchronize: true, // ⚠️ solo si NO es prod crítica
+  logging: false,
+
+  ssl: {
+    rejectUnauthorized: false, // 🔑 CLAVE para Render
+  }
+});
+
+
+
+
 // import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 // import { ConfigService } from '@nestjs/config';
 
@@ -23,25 +50,6 @@
 //   };
 // };
 
-
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { ConfigService } from '@nestjs/config';
-
-export const getTypeOrmConfig = (
-  config: ConfigService
-): TypeOrmModuleOptions => {
-  const dbUrl = config.get<string>('DATABASE_URL');
-
-  if (dbUrl) {
-    return {
-      type: 'postgres',
-      url: dbUrl,
-      ssl: { rejectUnauthorized: false },
-      autoLoadEntities: true,
-      synchronize: true, // ⚠️ solo en desarrollo
-    };
-  }
-};
 
   // Local
 //   return {
