@@ -3,12 +3,13 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
-  console.log('=== PROBANDO ENV ===');
-console.log(process.env.DB_USERNAME);
-console.log(process.env.DB_PASSWORD);
-console.log("=====================");
+//   console.log('=== PROBANDO ENV ===');
+// console.log(process.env.DB_USERNAME);
+// console.log(process.env.DB_PASSWORD);
+// console.log("=====================");
 
   const app = await NestFactory.create(AppModule);
+  
   const config = new DocumentBuilder()
     .setTitle('Ring Motos API')
     .setDescription('API desarrollada con NestJS — autenticación, roles y módulos dinámicos.')
