@@ -24,8 +24,6 @@
 // };
 
 
-
-
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 
@@ -35,7 +33,6 @@ export const getTypeOrmConfig = (
   const dbUrl = config.get<string>('DATABASE_URL');
 
   if (dbUrl) {
-    // Render (producción)
     return {
       type: 'postgres',
       url: dbUrl,
