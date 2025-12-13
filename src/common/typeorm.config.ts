@@ -36,7 +36,7 @@ export const getTypeOrmConfig = (
     url: config.get<string>('DATABASE_URL'),
     ssl: { rejectUnauthorized: false },
     autoLoadEntities: true,
-    synchronize: false, // ⚠️ usar migraciones en producción
+    synchronize: true // ⚠️ usar migraciones en producción
   };
 };
 
