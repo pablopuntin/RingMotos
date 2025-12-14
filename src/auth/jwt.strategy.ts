@@ -16,8 +16,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     console.log('✅ [JwtStrategy] Token válido, payload:', payload);
     return {
       userId: payload.sub,
-      name: payload.name,
-      roles: payload.roles || [],
+    name: payload.name,
+    role: payload.role
     };
   }
 }

@@ -42,7 +42,7 @@ export const getTypeOrmConfig = (
     autoLoadEntities: true,
     synchronize: true, // ⚠️ en prod real se pone false
     ssl: {
-      rejectUnauthorized: false, // 🔑 Render lo necesita
+      rejectUnauthorized: true, // 🔑 Render lo necesita
     }
   };
 };
