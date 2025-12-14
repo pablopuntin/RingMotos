@@ -23,23 +23,26 @@
 //   }
 // });
 
-import { ConfigService } from "@nestjs/config";
-import { TypeOrmModuleOptions } from "@nestjs/typeorm";
+// src/config/typeorm.config.ts
+import { ConfigService } from '@nestjs/config';
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
-export const getTypeOrmConfig = (configService: ConfigService) => {
+export const getTypeOrmConfig = (
+  configService: ConfigService,
+): TypeOrmModuleOptions => {
   const url = configService.get<string>('DATABASE_URL');
-
-  console.log('DATABASE_URL:', url); // 👈 DEBUG REAL
 
   if (!url) {
     throw new Error('❌ DATABASE_URL NOT FOUND');
   }
 
   return {
-    type: 'postgres',
+    type: 'postgres', // 👈 ahora TypeScript sabe que es postgres
     url,
     autoLoadEntities: true,
-    synchronize: true,
-    ssl: { rejectUnauthorized: false },
+    synchronize: true, // ⚠️ en prod real se pone false
+    ssl: {
+      rejectUnauthorized: false, // 🔑 Render lo necesita
+    }
   };
 };
