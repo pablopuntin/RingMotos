@@ -1,5 +1,5 @@
-import { applyDecorators } from '@nestjs/common';
-import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
+// import { applyDecorators } from '@nestjs/common';
+// import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
 /**
  * Decorador para marcar endpoints protegidos en Swagger.
@@ -16,6 +16,27 @@ import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
 //         );
 // }
 
+// src/auth/decorators/auth-swagger.decorator.ts
+
+import { applyDecorators, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { Roles } from './roles.decorator';
+import { RolesGuard } from '../guards/roles.guard';
+
+/**
+ * Swagger + JWT (SIN roles)
+ */
+export function AuthSwagger() {
+  return applyDecorators(
+    ApiBearerAuth(),
+    UseGuards(AuthGuard('jwt')),
+  );
+}
+
+/**
+ * Swagger + JWT + Roles
+ */
 export function AuthSwaggerRoles(...roles: string[]) {
   return applyDecorators(
     ApiBearerAuth(),
