@@ -93,3 +93,50 @@ export class RolesGuard implements CanActivate {
     return true;
   }
 }
+
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { ROLES_KEY } from '../decorators/roles.decorator';
+
+@Injectable()
+export class RolesGuard implements CanActivate {
+  constructor(private readonly reflector: Reflector) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (!requiredRoles || requiredRoles.length === 0) {
+      return true;
+    }
+
+    const { user } = context.switchToHttp().getRequest();
+
+    console.log('🧠 [RolesGuard] Usuario del token:', user);
+    console.log('🔑 [RolesGuard] Roles requeridos:', requiredRoles);
+
+    if (!user || !Array.isArray(user.roles)) {
+      throw new ForbiddenException('El usuario no tiene roles asignados');
+    }
+
+    const hasRole = user.roles.some((role: string) =>
+      requiredRoles.includes(role),
+    );
+
+    if (!hasRole) {
+      throw new ForbiddenException(
+        'No tienes permiso para acceder a este recurso',
+      );
+    }
+
+    console.log('✅ [RolesGuard] Rol autorizado');
+    return true;
+  }
+}
