@@ -66,7 +66,7 @@ export class UserController {
   //refactor
   @AuthSwagger()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('superadmin')
+  @Roles('superadmin', 'admin')
   @ApiOperation({ summary: 'Mostrar todos los usuarios' })
   @ApiQuery({
     name: 'page',

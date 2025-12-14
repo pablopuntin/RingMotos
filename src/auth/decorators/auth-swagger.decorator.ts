@@ -7,11 +7,19 @@ import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
  * - Muestra una descripción en caso de error 401.
  * - No afecta la lógica real de autenticación, solo documentación.
  */
-export function AuthSwagger() {
+// export function AuthSwagger() {
+//   return applyDecorators(
+//     ApiBearerAuth(), // 👈 ahora coincide con el esquema por defecto
+//     ApiUnauthorizedResponse({
+//       description: 'Debe incluir un token JWT válido en el encabezado Authorization.'
+//         })
+//         );
+// }
+
+export function AuthSwaggerRoles(...roles: string[]) {
   return applyDecorators(
-    ApiBearerAuth(), // 👈 ahora coincide con el esquema por defecto
-    ApiUnauthorizedResponse({
-      description: 'Debe incluir un token JWT válido en el encabezado Authorization.'
-        })
-        );
+    ApiBearerAuth(),
+    UseGuards(AuthGuard('jwt'), RolesGuard),
+    Roles(...roles),
+  );
 }
