@@ -62,13 +62,7 @@ export class User {
     type: () => [Role],
     description: 'Lista de roles asociados al usuario',
   })
-  // @ManyToMany(() => Role, (role) => role.users, { eager: true })
-  // @JoinTable({
-  //   name: 'user_roles',
-  //   joinColumn: { name: 'user_id', referencedColumnName: 'id' },
-  //   inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
-  // })
-  // roles: Role[];
+  
 
   @ManyToOne(() => Role, role => role.users)
 role: Role;

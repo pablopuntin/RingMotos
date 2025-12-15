@@ -1,14 +1,14 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { AcountEntryService } from './acount-entry.service';
-import { CreateAcountEntryDto } from './dto/create-acount-entry.dto';
 import { UpdateAcountEntryDto } from './dto/update-acount-entry.dto';
+import { CreateAccountEntryDto } from './dto/create-acount-entry.dto';
 
 @Controller('acount-entry')
 export class AcountEntryController {
   constructor(private readonly acountEntryService: AcountEntryService) {}
 
   @Post()
-  create(@Body() createAcountEntryDto: CreateAcountEntryDto) {
+  create(@Body() createAcountEntryDto: CreateAccountEntryDto) {
     return this.acountEntryService.create(createAcountEntryDto);
   }
 

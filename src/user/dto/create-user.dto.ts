@@ -1,5 +1,4 @@
 import { IsEmail, IsNotEmpty, IsOptional } from 'class-validator';
-import { Role } from '../entities/role.entity';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateUserDto {
@@ -25,16 +24,11 @@ export class CreateUserDto {
   email: string;
 
   @ApiPropertyOptional({
-    description: 'Contraseña (obligatoria si no se envía clerkId)',
-    example: 'mySecurePassword123'
+    description: 'Contraseña',
+    example: 'Mypass123'
   })
    @IsOptional()
   password?: string;
 
-  @ApiPropertyOptional({
-    description: 'Rol asignado al usuario',
-    type: () => Role
-  })
-  @IsOptional()
-  role?: Role;
+ 
 }
