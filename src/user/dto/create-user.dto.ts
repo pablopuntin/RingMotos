@@ -27,8 +27,8 @@ export class CreateUserDto {
     description: 'Contraseña',
     example: 'Mypass123'
   })
-   @IsOptional()
-  password?: string;
+   @IsNotEmpty()
+  password: string;
 
  
 }
