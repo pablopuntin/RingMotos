@@ -6,6 +6,25 @@ async function bootstrap() {
 
 
   const app = await NestFactory.create(AppModule);
+  
+  app.enableCors({
+    origin: [
+      'https://front-one-umber.vercel.app',
+      'https://front-git-main-hr-systems-projects.vercel.app', // ← agregá este
+      'http://localhost:3000'
+    ],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true
+  });
+
+   // Activar validación global
+  // app.useGlobalPipes(
+  //   new ValidationPipe({
+  //     whitelist: true, // elimina propiedades no declaradas en el DTO
+  //     forbidNonWhitelisted: true, // lanza error si llegan propiedades extra
+  //     transform: true // transforma tipos automáticamente (ej: string -> number)
+  //   })
+  // );
 
   const config = new DocumentBuilder()
     .setTitle('Ring Motos API')

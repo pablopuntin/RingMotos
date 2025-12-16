@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { CashMovementService } from './cash-movement.service';
-import { CashMovementController } from './cash-movement.controller';
 import { CashMovement } from './entities/cash-movement.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CashMovementsController } from './cash-movement.controller';
+import { CashMovementsService } from './cash-movement.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([CashMovement])],
-  controllers: [CashMovementController],
-  providers: [CashMovementService],
+  controllers: [CashMovementsController],
+  providers: [CashMovementsService]
 })
 export class CashMovementModule {}
