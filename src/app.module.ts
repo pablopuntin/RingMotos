@@ -18,7 +18,7 @@ import { SaleItemModule } from './sale-item/sale-item.module';
 import { RemitoModule } from './remito/remito.module';
 import { PaymentModule } from './payment/payment.module';
 import { PaymentAllocationModule } from './payment-allocation/payment-allocation.module';
-import { AcountEntryModule } from './acount-entry/acount-entry.module';
+import { AccountEntryModule } from './acount-entry/acount-entry.module';
 import { SupplierModule } from './supplier/supplier.module';
 import { PurchaseModule } from './purchase/purchase.module';
 import { PurchaseItemModule } from './purchase-item/purchase-item.module';
@@ -49,7 +49,7 @@ import { Sale } from './sale/entities/sale.entity';
     RemitoModule,
     PaymentModule,
     PaymentAllocationModule,
-    AcountEntryModule,
+    AccountEntryModule,
     SupplierModule,
     PurchaseModule,
     PurchaseItemModule,

@@ -1,34 +1,25 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Delete, Param, Body } from '@nestjs/common';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { SaleItemService } from './sale-item.service';
 import { CreateSaleItemDto } from './dto/create-sale-item.dto';
-import { UpdateSaleItemDto } from './dto/update-sale-item.dto';
 
-@Controller('sale-item')
+@ApiTags('Sale Items')
+@Controller('sales')
 export class SaleItemController {
-  constructor(private readonly saleItemService: SaleItemService) {}
+  constructor(private readonly service: SaleItemService) {}
 
-  @Post()
-  create(@Body() createSaleItemDto: CreateSaleItemDto) {
-    return this.saleItemService.create(createSaleItemDto);
+  @Post(':saleId/items')
+  @ApiOperation({ summary: 'Agregar ítem a una venta' })
+  create(
+    @Param('saleId') saleId: string,
+    @Body() dto: CreateSaleItemDto,
+  ) {
+    return this.service.create(saleId, dto);
   }
 
-  @Get()
-  findAll() {
-    return this.saleItemService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.saleItemService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSaleItemDto: UpdateSaleItemDto) {
-    return this.saleItemService.update(+id, updateSaleItemDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.saleItemService.remove(+id);
+  @Delete('items/:itemId')
+  @ApiOperation({ summary: 'Eliminar ítem de una venta' })
+  remove(@Param('itemId') itemId: string) {
+    return this.service.remove(itemId);
   }
 }

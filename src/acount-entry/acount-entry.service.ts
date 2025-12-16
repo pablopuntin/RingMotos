@@ -1,26 +1,90 @@
-import { Injectable } from '@nestjs/common';
-import { UpdateAcountEntryDto } from './dto/update-acount-entry.dto';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AccountEntry } from './entities/acount-entry.entity';
+import { Client } from 'src/client/entities/client.entity';
+import { Sale } from 'src/sale/entities/sale.entity';
+import { Payment } from 'src/payment/entities/payment.entity';
 import { CreateAccountEntryDto } from './dto/create-acount-entry.dto';
 
 @Injectable()
-export class AcountEntryService {
-  create(createAcountEntryDto: CreateAccountEntryDto) {
-    return 'This action adds a new acountEntry';
+export class AccountEntryService {
+  constructor(
+    @InjectRepository(AccountEntry)
+    private readonly repo: Repository<AccountEntry>,
+
+    @InjectRepository(Client)
+    private readonly clientRepo: Repository<Client>,
+
+    @InjectRepository(Sale)
+    private readonly saleRepo: Repository<Sale>,
+
+    @InjectRepository(Payment)
+    private readonly paymentRepo: Repository<Payment>,
+  ) {}
+
+  /**
+   * Obtiene el último balance del cliente
+   */
+  async getLastBalance(clientId: string): Promise<number> {
+    const last = await this.repo.findOne({
+      where: { client: { id: clientId } },
+      order: { createdAt: 'DESC' },
+    });
+
+    return last ? Number(last.balanceAfter) : 0;
   }
 
-  findAll() {
-    return `This action returns all acountEntry`;
+  /**
+   * Crea un nuevo movimiento de cuenta corriente
+   */
+  async create(dto: CreateAccountEntryDto) {
+    const client = await this.clientRepo.findOneBy({ id: dto.clientId });
+    if (!client) throw new BadRequestException('Cliente no encontrado');
+
+    const lastBalance = await this.getLastBalance(client.id);
+
+   let sale: Sale | null = null;
+let payment: Payment | null = null;
+
+
+    if (dto.saleId) {
+      sale = await this.saleRepo.findOneBy({ id: dto.saleId });
+      if (!sale) throw new BadRequestException('Venta no encontrada');
+    }
+
+    if (dto.paymentId) {
+      payment = await this.paymentRepo.findOneBy({ id: dto.paymentId });
+      if (!payment) throw new BadRequestException('Pago no encontrado');
+    }
+
+    const newBalance =
+      dto.type === 'PAYMENT'
+        ? lastBalance - Number(dto.amount)
+        : lastBalance + Number(dto.amount);
+
+    const entry = this.repo.create({
+  client: client,
+  type: dto.type,
+  sale: sale,
+  payment: payment,
+  amount: dto.amount,
+  balanceAfter: newBalance,
+  description: dto.description,
+  status: dto.status ?? 'ACTIVE',
+} as Partial<AccountEntry>);
+
+    return this.repo.save(entry);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} acountEntry`;
-  }
-
-  update(id: number, updateAcountEntryDto: UpdateAcountEntryDto) {
-    return `This action updates a #${id} acountEntry`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} acountEntry`;
+  /**
+   * Cuenta corriente completa del cliente
+   */
+  findByClient(clientId: string) {
+    return this.repo.find({
+      where: { client: { id: clientId } },
+      order: { createdAt: 'ASC' },
+      relations: ['sale', 'payment'],
+    });
   }
 }

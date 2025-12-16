@@ -1,26 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { CreatePaymentAllocationDto } from './dto/create-payment-allocation.dto';
-import { UpdatePaymentAllocationDto } from './dto/update-payment-allocation.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { PaymentAllocation } from './entities/payment-allocation.entity';
 
 @Injectable()
 export class PaymentAllocationService {
-  create(createPaymentAllocationDto: CreatePaymentAllocationDto) {
-    return 'This action adds a new paymentAllocation';
-  }
+  constructor(
+    @InjectRepository(PaymentAllocation)
+    private readonly repo: Repository<PaymentAllocation>,
+  ) {}
 
-  findAll() {
-    return `This action returns all paymentAllocation`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} paymentAllocation`;
-  }
-
-  update(id: number, updatePaymentAllocationDto: UpdatePaymentAllocationDto) {
-    return `This action updates a #${id} paymentAllocation`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} paymentAllocation`;
+  findByPayment(paymentId: string) {
+    return this.repo.find({
+      where: { payment: { id: paymentId } },
+      relations: ['sale'],
+    });
   }
 }

@@ -1,34 +1,57 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { SaleService } from './sale.service';
+import {
+  Controller,
+  Post,
+  Patch,
+  Get,
+  Param,
+  Body,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { SalesService } from './sale.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
-import { UpdateSaleDto } from './dto/update-sale.dto';
+import { AddSaleItemDto } from './dto/create-items.dto';
 
-@Controller('sale')
-export class SaleController {
-  constructor(private readonly saleService: SaleService) {}
+@ApiTags('Sales')
+@Controller('sales')
+export class SalesController {
+  constructor(private readonly salesService: SalesService) {}
 
   @Post()
-  create(@Body() createSaleDto: CreateSaleDto) {
-    return this.saleService.create(createSaleDto);
+  @ApiOperation({ summary: 'Crear venta (DRAFT)' })
+  create(@Body() dto: CreateSaleDto) {
+    return this.salesService.create(dto);
+  }
+
+  @Post(':id/items')
+  @ApiOperation({ summary: 'Agregar ítems a la venta' })
+  addItem(
+    @Param('id') id: string,
+    @Body() dto: AddSaleItemDto,
+  ) {
+    return this.salesService.addItem(id, dto);
+  }
+
+  @Patch(':id/confirm')
+  @ApiOperation({ summary: 'Confirmar venta' })
+  confirm(@Param('id') id: string) {
+    return this.salesService.confirm(id);
+  }
+
+  @Patch(':id/cancel')
+  @ApiOperation({ summary: 'Cancelar venta / base para nota de crédito' })
+  cancel(@Param('id') id: string) {
+    return this.salesService.cancel(id);
   }
 
   @Get()
+  @ApiOperation({ summary: 'Listar ventas' })
   findAll() {
-    return this.saleService.findAll();
+    return this.salesService.findAll();
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Detalle de venta' })
   findOne(@Param('id') id: string) {
-    return this.saleService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSaleDto: UpdateSaleDto) {
-    return this.saleService.update(+id, updateSaleDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.saleService.remove(+id);
+    return this.salesService.findOne(id);
   }
 }

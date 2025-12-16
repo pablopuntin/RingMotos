@@ -1,34 +1,22 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { AcountEntryService } from './acount-entry.service';
-import { UpdateAcountEntryDto } from './dto/update-acount-entry.dto';
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { AccountEntryService } from './acount-entry.service';
 import { CreateAccountEntryDto } from './dto/create-acount-entry.dto';
 
-@Controller('acount-entry')
-export class AcountEntryController {
-  constructor(private readonly acountEntryService: AcountEntryService) {}
+@ApiTags('Account Entries')
+@Controller('account-entries')
+export class AccountEntryController {
+  constructor(private readonly service: AccountEntryService) {}
 
   @Post()
-  create(@Body() createAcountEntryDto: CreateAccountEntryDto) {
-    return this.acountEntryService.create(createAcountEntryDto);
+  @ApiOperation({ summary: 'Crear movimiento de cuenta corriente' })
+  create(@Body() dto: CreateAccountEntryDto) {
+    return this.service.create(dto);
   }
 
-  @Get()
-  findAll() {
-    return this.acountEntryService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.acountEntryService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAcountEntryDto: UpdateAcountEntryDto) {
-    return this.acountEntryService.update(+id, updateAcountEntryDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.acountEntryService.remove(+id);
+  @Get('client/:clientId')
+  @ApiOperation({ summary: 'Cuenta corriente del cliente' })
+  findByClient(@Param('clientId') clientId: string) {
+    return this.service.findByClient(clientId);
   }
 }

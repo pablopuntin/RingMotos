@@ -1,29 +1,3 @@
-// import { Injectable } from '@nestjs/common';
-// import { InjectRepository } from '@nestjs/typeorm';
-// import { Repository, Between } from 'typeorm';
-// import { CashMovement } from './entities/cash-movement.entity';
-
-// @Injectable()
-// export class CashMovementsService {
-//   constructor(
-//     @InjectRepository(CashMovement) private movementsRepo: Repository<CashMovement>,
-//   ) {}
-
-//   async listMovements(filters: { cashRegisterId?: string; from?: string; to?: string; type?: 'IN' | 'OUT' }) {
-//     const where: any = {};
-//     if (filters.cashRegisterId) where.cashRegisterId = filters.cashRegisterId;
-//     if (filters.type) where.type = filters.type;
-//     if (filters.from && filters.to) {
-//       where.createdAt = Between(new Date(filters.from), new Date(filters.to));
-//     }
-
-//     return this.movementsRepo.find({
-//       where,
-//       order: { createdAt: 'DESC' },
-//     });
-//   }
-// }
-
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
