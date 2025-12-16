@@ -10,6 +10,7 @@ import { SaleItem } from 'src/sale-item/entities/sale-item.entity';
 import { Client } from 'src/client/entities/client.entity';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { AddSaleItemDto } from './dto/create-items.dto';
+import { AccountEntry } from 'src/acount-entry/entities/acount-entry.entity';
 
 @Injectable()
 export class SalesService {
@@ -107,67 +108,113 @@ export class SalesService {
   ========================== */
 
   async confirm(id: string) {
-    return this.dataSource.transaction(async manager => {
-      const sale = await manager.findOne(Sale, {
-        where: { id },
-        relations: ['items', 'client'],
-      });
-
-      if (!sale) throw new NotFoundException('Venta no encontrada');
-
-      if (sale.status !== 'DRAFT') {
-        throw new ConflictException('La venta no está en borrador');
-      }
-
-      if (!sale.items || sale.items.length === 0) {
-        throw new ConflictException('La venta no tiene ítems');
-      }
-
-      sale.status = 'CONFIRMED';
-      sale.confirmedAt = new Date();
-
-      // 🔴 ACÁ VA:
-      // - account_entry (CHARGE)
-      // - actualizar client.totalDebtCache
-
-      await manager.save(sale);
-      return sale;
+  return this.dataSource.transaction(async manager => {
+    const sale = await manager.findOne(Sale, {
+      where: { id },
+      relations: ['items', 'client'],
     });
-  }
+
+    if (!sale) throw new NotFoundException('Venta no encontrada');
+
+    if (sale.status !== 'DRAFT') {
+      throw new ConflictException('La venta no está en borrador');
+    }
+
+    if (!sale.items || sale.items.length === 0) {
+      throw new ConflictException('La venta no tiene ítems');
+    }
+
+    // 1️⃣ confirmar venta
+    sale.status = 'CONFIRMED';
+    sale.confirmedAt = new Date();
+    await manager.save(sale);
+
+    // 2️⃣ obtener último balance del cliente
+    const lastEntry = await manager.findOne(AccountEntry, {
+      where: { client: { id: sale.client.id } },
+      order: { createdAt: 'DESC' },
+    });
+
+    const lastBalance = lastEntry ? Number(lastEntry.balanceAfter) : 0;
+    const newBalance = lastBalance + Number(sale.totalAmount);
+
+    // 3️⃣ crear CHARGE
+    const entry = manager.create(AccountEntry, {
+      client: sale.client,
+      type: 'CHARGE',
+      sale,
+      amount: sale.totalAmount,
+      balanceAfter: newBalance,
+      description: `Venta confirmada ${sale.id}`,
+      status: 'ACTIVE',
+    });
+
+    await manager.save(entry);
+
+    // 4️⃣ cache del cliente
+    sale.client.totalDebtCache = newBalance;
+    await manager.save(sale.client);
+
+    return sale;
+  });
+}
 
   /* =========================
      Cancelar venta (base para nota de crédito)
   ========================== */
+async cancel(id: string) {
+  return this.dataSource.transaction(async manager => {
+    const sale = await manager.findOne(Sale, {
+      where: { id },
+      relations: ['client'],
+    });
 
-  async cancel(id: string) {
-    return this.dataSource.transaction(async manager => {
-      const sale = await manager.findOne(Sale, {
-        where: { id },
-        relations: ['client'],
+    if (!sale) throw new NotFoundException('Venta no encontrada');
+
+    if (sale.status === 'CANCELLED') {
+      throw new ConflictException('La venta ya está cancelada');
+    }
+
+    if (sale.paidAmount > 0) {
+      throw new ConflictException(
+        'La venta tiene pagos asociados. Se requiere nota de crédito.',
+      );
+    }
+
+    // 🔴 si estaba CONFIRMED, revertimos deuda
+    if (sale.status === 'CONFIRMED') {
+      const lastEntry = await manager.findOne(AccountEntry, {
+        where: { client: { id: sale.client.id } },
+        order: { createdAt: 'DESC' },
       });
 
-      if (!sale) throw new NotFoundException('Venta no encontrada');
+      const lastBalance = lastEntry ? Number(lastEntry.balanceAfter) : 0;
+      const newBalance = lastBalance - Number(sale.totalAmount);
 
-      if (sale.status === 'CANCELLED') {
-        throw new ConflictException('La venta ya está cancelada');
-      }
+      const adjustment = manager.create(AccountEntry, {
+        client: sale.client,
+        type: 'ADJUSTMENT',
+        sale,
+        amount: sale.totalAmount,
+        balanceAfter: newBalance,
+        description: `Cancelación venta ${sale.id}`,
+        status: 'ACTIVE',
+      });
 
-      if (sale.paidAmount > 0) {
-        throw new ConflictException(
-          'La venta tiene pagos asociados. Se requiere nota de crédito.',
-        );
-      }
+      await manager.save(adjustment);
 
-      // 🔴 Si estaba CONFIRMED, acá va el AJUSTE negativo
-      // account_entry ADJUSTMENT (-totalAmount)
+      sale.client.totalDebtCache = newBalance;
+      await manager.save(sale.client);
+    }
 
-      sale.status = 'CANCELLED';
-      await manager.save(sale);
+    sale.status = 'CANCELLED';
+    await manager.save(sale);
 
-      return sale;
-    });
-  }
+    return sale;
+  });
+}
 
+  
   /* =========================
      Obtener ventas
   ========================== */
