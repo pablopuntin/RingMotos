@@ -37,12 +37,12 @@ export const getTypeOrmConfig = (
   }
 
   return {
-    type: 'postgres', // 👈 ahora TypeScript sabe que es postgres
+    type: 'postgres',
     url,
     autoLoadEntities: true,
     synchronize: true, // ⚠️ en prod real se pone false
     ssl: {
-      rejectUnauthorized: true, // 🔑 Render lo necesita
+      rejectUnauthorized: true
     }
   };
 };
