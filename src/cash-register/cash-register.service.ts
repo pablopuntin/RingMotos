@@ -17,7 +17,7 @@ export class CashRegistersService {
       name: dto.name,
       openingAmount: dto.openingAmount,
       status: 'OPEN',
-      openedBy: dto.userId,
+      openedBy: dto.openedBy,
       openedAt: new Date(),
     });
     return this.cashRepo.save(cash);
