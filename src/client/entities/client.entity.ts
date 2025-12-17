@@ -50,7 +50,7 @@ import {
 import { Sale } from 'src/sale/entities/sale.entity';
 import { AccountEntry } from 'src/acount-entry/entities/acount-entry.entity';
 
-@Entity('clients')
+@Entity('client')
 export class Client {
   @PrimaryGeneratedColumn('uuid') 
   id: string;
