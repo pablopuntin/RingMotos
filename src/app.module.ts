@@ -25,6 +25,7 @@ import { PurchaseItemModule } from './purchase-item/purchase-item.module';
 import { SupplierPaymentModule } from './supplier-payment/supplier-payment.module';
 import { SupplierAccountEntryModule } from './supplier-account-entry/supplier-account-entry.module';
 import { Sale } from './sale/entities/sale.entity';
+import { ClientsSeed } from './common/seeds/seedconsumidorFinal';
 
 @Module({
   imports: [
@@ -56,6 +57,6 @@ import { Sale } from './sale/entities/sale.entity';
     SupplierPaymentModule,
     SupplierAccountEntryModule
   ],
-  providers: [InitialSeeder]
+  providers: [InitialSeeder, ClientsSeed]
 })
 export class AppModule {}

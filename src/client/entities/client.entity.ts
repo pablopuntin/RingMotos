@@ -1,14 +1,62 @@
-import { Column, PrimaryGeneratedColumn, CreateDateColumn, Entity, OneToMany } from 'typeorm';
+// import { Column, PrimaryGeneratedColumn, CreateDateColumn, Entity, OneToMany } from 'typeorm';
+// import { Sale } from 'src/sale/entities/sale.entity';
+// import { AccountEntry } from 'src/acount-entry/entities/acount-entry.entity';
+
+// @Entity()
+// export class Client {
+//   @PrimaryGeneratedColumn('uuid')
+//   id: string;
+
+//   @Column()
+//   dni: number;
+
+//   @Column()
+//   name: string;
+
+//   @Column()
+//   lastName: string;
+
+//   @Column()
+//   phone: number;
+
+//   @Column()
+//   adress: string;
+
+//   @Column({ unique: true })
+//   email: string;
+
+//   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+//   totalDebtCache: number;
+
+//   @CreateDateColumn()
+//   createdAt: Date;
+
+//   // Relaciones
+//   @OneToMany(() => Sale, (sale) => sale.client)
+//   sales: Sale[];
+
+//   @OneToMany(() => AccountEntry, (accountEntry) => accountEntry.client)
+//   accountEntries: AccountEntry[];
+// }
+
+// src/clients/client.entity.ts
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  OneToMany
+} from 'typeorm';
 import { Sale } from 'src/sale/entities/sale.entity';
 import { AccountEntry } from 'src/acount-entry/entities/acount-entry.entity';
 
-@Entity()
+@Entity('clients')
 export class Client {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn('uuid') 
   id: string;
 
-  @Column()
-  dni: number;
+  @Column({ nullable: true })
+  dni?: string;
 
   @Column()
   name: string;
@@ -16,25 +64,28 @@ export class Client {
   @Column()
   lastName: string;
 
-  @Column()
-  phone: number;
+  @Column({ nullable: true })
+  phone?: string;
 
-  @Column()
-  adress: string;
+  @Column({ nullable: true })
+  email?: string;
 
-  @Column({ unique: true })
-  email: string;
+  @Column({ nullable: true })
+  address?: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  @Column({ default: false })
+  isFinalConsumer: boolean;
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   totalDebtCache: number;
 
   @CreateDateColumn()
   createdAt: Date;
 
   // Relaciones
-  @OneToMany(() => Sale, (sale) => sale.client)
+  @OneToMany(() => Sale, sale => sale.client)
   sales: Sale[];
 
-  @OneToMany(() => AccountEntry, (accountEntry) => accountEntry.client)
+  @OneToMany(() => AccountEntry, ae => ae.client)
   accountEntries: AccountEntry[];
 }

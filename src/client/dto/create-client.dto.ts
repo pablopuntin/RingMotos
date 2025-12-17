@@ -6,7 +6,7 @@ export class CreateClientDto {
     example: '22555999',
     required: false
   })
-  dni: number;
+  dni?: string;
 
   @ApiProperty({
     description: 'Nombre del cliente',
@@ -25,14 +25,14 @@ export class CreateClientDto {
     example: 'lote 41',
     required: false
   })
-  adress: string;
+  adress?: string;
 
   @ApiProperty({
     description: 'Teléfono del cliente solo números, sin guiones, paréntesis o comas',
     example: '3857408499',
     required: false
   })
-  phone: number;
+  phone?: string;
 
   @ApiProperty({
     description: 'Correo electrónico del cliente (opcional)',
@@ -41,4 +41,3 @@ export class CreateClientDto {
   })
   email?: string;
 }
-
