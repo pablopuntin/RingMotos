@@ -96,6 +96,7 @@ export class Sale {
   @OneToMany(() => AccountEntry, (ae) => ae.sale)
   accountEntries: AccountEntry[];
 
-  @OneToOne(() => Remito, (remito) => remito.sale)
-  remito: Remito;
+ @OneToOne(() => Remito, (remito) => remito.sale, { cascade: true })
+remito: Remito;
+
 }
