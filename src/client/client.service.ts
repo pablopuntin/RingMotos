@@ -30,14 +30,23 @@ export class ClientsService {
   }
 
   async create(dto: CreateClientDto): Promise<Client> {
-    const client = this.clientsRepo.create({
-      ...dto,
-      isFinalConsumer: false,
-      totalDebtCache: 0,
-    });
-
-    return this.clientsRepo.save(client);
+  // Verificar si ya existe un cliente con ese email
+  if (dto.email) {
+    const existing = await this.clientsRepo.findOne({ where: { email: dto.email } });
+    if (existing) {
+      throw new BadRequestException('Email already exists');
+    }
   }
+
+  const client = this.clientsRepo.create({
+    ...dto,
+    isFinalConsumer: false,
+    totalDebtCache: 0,
+  });
+
+  return this.clientsRepo.save(client);
+}
+
 
   async findAll(): Promise<Client[]> {
     return this.clientsRepo.find({
