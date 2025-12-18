@@ -28,64 +28,6 @@ export class PaymentService {
     private readonly dataSource: DataSource,
   ) {}
 
-//   async create(dto: CreatePaymentDto) {
-//     return this.dataSource.transaction(async manager => {
-//       const payment = manager.create(Payment, {
-//         amount: dto.amount,
-//         paymentMethod: dto.paymentMethod,
-//         receivedBy: dto.receivedBy,
-//         cashRegisterId: dto.cashRegisterId,
-//         paymentDate: new Date(),
-//         status: 'COMPLETED',
-//       });
-
-//       await manager.save(payment);
-
-//       let remaining = dto.amount;
-
-//       for (const alloc of dto.allocations) {
-//         const sale = await manager.findOne(Sale, {
-//           where: { id: alloc.saleId },
-//         });
-
-//         if (!sale) throw new NotFoundException('Venta no encontrada');
-
-//         if (sale.status === 'CANCELLED') {
-//           throw new ConflictException('No se puede pagar una venta cancelada');
-//         }
-
-//         const allocation = manager.create(PaymentAllocation, {
-//           payment,
-//           sale,
-//           amountApplied: alloc.amount,
-//         });
-
-//         await manager.save(allocation);
-
-//         sale.paidAmount += alloc.amount;
-//         sale.status =
-//           sale.paidAmount >= sale.totalAmount
-//             ? 'PAID'
-//             : 'PAID_PARTIAL';
-
-//         await manager.save(sale);
-
-//         remaining -= alloc.amount;
-//       }
-
-//       if (remaining !== 0) {
-//         throw new ConflictException('El pago no fue completamente asignado');
-//       }
-
-//       // 🔴 ACÁ VA:
-//       // - cash_movement IN
-//       // - account_entry PAYMENT
-
-//       return payment;
-//     });
-//   }
-// }
-
 async create(dto: CreatePaymentDto) {
   return this.dataSource.transaction(async manager => {
 

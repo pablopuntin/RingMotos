@@ -1,6 +1,7 @@
 import { Column, PrimaryGeneratedColumn, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { User } from 'src/user/entities/user.entity';
 import { CashMovement } from 'src/cash-movement/entities/cash-movement.entity';
+import { SupplierPayment } from 'src/supplier-payment/entities/supplier-payment.entity';
 
 @Entity('cash_registers')
 export class CashRegister {
@@ -37,6 +38,6 @@ export class CashRegister {
 // @OneToMany(() => Payment, p => p.cashRegister)
 // payments: Payment[];
 
-// @OneToMany(() => SupplierPayment, sp => sp.cashRegister)
-// supplierPayments: SupplierPayment[];
+ @OneToMany(() => SupplierPayment, sp => sp.cashRegister)
+ supplierPayments: SupplierPayment[];
 }

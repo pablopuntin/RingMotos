@@ -1,26 +1,73 @@
+// purchases/purchases.service.ts
 import { Injectable } from '@nestjs/common';
-import { CreatePurchaseDto } from './dto/create-purchase.dto';
-import { UpdatePurchaseDto } from './dto/update-purchase.dto';
+import { DataSource, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { PurchaseStatus } from './entities/purchase.entity';
+import { Purchase } from './entities/purchase.entity';
+import { PurchaseItem } from 'src/purchase-item/entities/purchase-item.entity';
+import { Supplier } from 'src/supplier/entities/supplier.entity';
+import { SupplierAccountEntry } from 'src/supplier-account-entry/entities/supplier-account-entry.entity';
+import { SupplierAccountEntryType } from 'src/supplier-account-entry/entities/supplier-account-entry.entity';
 
 @Injectable()
-export class PurchaseService {
-  create(createPurchaseDto: CreatePurchaseDto) {
-    return 'This action adds a new purchase';
+export class PurchasesService {
+  constructor(
+    private readonly ds: DataSource,
+    @InjectRepository(Purchase) private readonly purchaseRepo: Repository<Purchase>,
+    @InjectRepository(PurchaseItem) private readonly itemRepo: Repository<PurchaseItem>,
+    @InjectRepository(Supplier) private readonly supplierRepo: Repository<Supplier>,
+    @InjectRepository(SupplierAccountEntry) private readonly saeRepo: Repository<SupplierAccountEntry>,
+  ) {}
+
+  async create(dto: { supplierId: string; items: { description: string; qty: number; unitCost: number; productId?: string }[] }) {
+    const supplier = await this.supplierRepo.findOneByOrFail({ id: dto.supplierId });
+
+    const items = dto.items.map(i => {
+      const lineTotal = Number(i.qty) * Number(i.unitCost);
+      return this.itemRepo.create({ description: i.description, qty: String(i.qty), unitCost: String(i.unitCost), lineTotal: String(lineTotal), productId: i.productId });
+    });
+
+    const totalAmount = items.reduce((sum, i) => sum + Number(i.lineTotal), 0);
+
+    const purchase = this.purchaseRepo.create({ supplier, items, totalAmount: totalAmount, status: PurchaseStatus.DRAFT });
+    return this.purchaseRepo.save(purchase);
   }
 
-  findAll() {
-    return `This action returns all purchase`;
+  async confirm(purchaseId: string) {
+    return this.ds.transaction(async manager => {
+      const purchase = await manager.findOne(Purchase, { where: { id: purchaseId }, relations: { items: true, supplier: true } });
+      if (!purchase) throw new Error('Purchase not found');
+      if (purchase.status !== PurchaseStatus.DRAFT) throw new Error('Only DRAFT can be confirmed');
+
+      purchase.status = PurchaseStatus.CONFIRMED;
+      purchase.confirmedAt = new Date();
+      await manager.save(purchase);
+
+      const supplier = purchase.supplier;
+      const newBalance = Number(supplier.totalDebtCache) + Number(purchase.totalAmount);
+      supplier.totalDebtCache = Math.max(newBalance, 0);
+
+      await manager.save(supplier);
+
+   const entry: SupplierAccountEntry = manager.create(SupplierAccountEntry, {
+  supplier,
+  purchase,
+  type: SupplierAccountEntryType.DEBT,
+  amount: purchase.totalAmount,
+  balanceAfter: newBalance,
+});
+
+await manager.save(entry);
+
+      return purchase;
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} purchase`;
-  }
-
-  update(id: number, updatePurchaseDto: UpdatePurchaseDto) {
-    return `This action updates a #${id} purchase`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} purchase`;
+  async list(params?: { supplierId?: string; status?: PurchaseStatus }) {
+    return this.purchaseRepo.find({
+      where: { ...(params?.supplierId ? { supplier: { id: params.supplierId } } : {}), ...(params?.status ? { status: params.status } : {}) },
+      relations: ['items', 'supplier'],
+      order: { createdAt: 'DESC' },
+    });
   }
 }

@@ -1,34 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { SupplierService } from './supplier.service';
+// suppliers/suppliers.controller.ts
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Supplier } from './entities/supplier.entity';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
-import { UpdateSupplierDto } from './dto/update-supplier.dto';
 
-@Controller('supplier')
-export class SupplierController {
-  constructor(private readonly supplierService: SupplierService) {}
-
-  @Post()
-  create(@Body() createSupplierDto: CreateSupplierDto) {
-    return this.supplierService.create(createSupplierDto);
-  }
+@Controller('suppliers')
+export class SuppliersController {
+  constructor(@InjectRepository(Supplier) private readonly repo: Repository<Supplier>) {}
 
   @Get()
-  findAll() {
-    return this.supplierService.findAll();
-  }
+  list() { return this.repo.find({ order: { createdAt: 'DESC' } }); }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.supplierService.findOne(+id);
-  }
+  get(@Param('id') id: string) { return this.repo.findOneByOrFail({ id }); }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSupplierDto: UpdateSupplierDto) {
-    return this.supplierService.update(+id, updateSupplierDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.supplierService.remove(+id);
+  @Post()
+  create(@Body() dto: CreateSupplierDto) {
+    const s = this.repo.create(dto);
+    return this.repo.save(s);
   }
 }

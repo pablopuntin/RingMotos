@@ -1,34 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { SupplierAccountEntryService } from './supplier-account-entry.service';
-import { CreateSupplierAccountEntryDto } from './dto/create-supplier-account-entry.dto';
-import { UpdateSupplierAccountEntryDto } from './dto/update-supplier-account-entry.dto';
+// supplier-account-entries/supplier-account-entries.controller.ts
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { SupplierAccountEntriesService } from './supplier-account-entry.service';
 
-@Controller('supplier-account-entry')
-export class SupplierAccountEntryController {
-  constructor(private readonly supplierAccountEntryService: SupplierAccountEntryService) {}
+@Controller('supplier-account-entries')
+export class SupplierAccountEntriesController {
+  constructor(private readonly service: SupplierAccountEntriesService) {}
 
-  @Post()
-  create(@Body() createSupplierAccountEntryDto: CreateSupplierAccountEntryDto) {
-    return this.supplierAccountEntryService.create(createSupplierAccountEntryDto);
+  @Get('supplier/:supplierId')
+  listBySupplier(@Param('supplierId') supplierId: string) {
+    return this.service.listBySupplier(supplierId);
   }
 
-  @Get()
-  findAll() {
-    return this.supplierAccountEntryService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.supplierAccountEntryService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSupplierAccountEntryDto: UpdateSupplierAccountEntryDto) {
-    return this.supplierAccountEntryService.update(+id, updateSupplierAccountEntryDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.supplierAccountEntryService.remove(+id);
+  @Post('adjustment')
+  createAdjustment(@Body() dto: { supplierId: string; amount: number; description?: string }) {
+    return this.service.createAdjustment(dto.supplierId, dto.amount, dto.description);
   }
 }

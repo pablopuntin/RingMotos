@@ -1,26 +1,46 @@
+// supplier-account-entries/supplier-account-entries.service.ts
 import { Injectable } from '@nestjs/common';
-import { CreateSupplierAccountEntryDto } from './dto/create-supplier-account-entry.dto';
-import { UpdateSupplierAccountEntryDto } from './dto/update-supplier-account-entry.dto';
+import { DataSource, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Supplier } from 'src/supplier/entities/supplier.entity';
+import {
+  SupplierAccountEntry,
+  SupplierAccountEntryType,
+} from './entities/supplier-account-entry.entity';
 
 @Injectable()
-export class SupplierAccountEntryService {
-  create(createSupplierAccountEntryDto: CreateSupplierAccountEntryDto) {
-    return 'This action adds a new supplierAccountEntry';
+export class SupplierAccountEntriesService {
+  constructor(
+    private readonly ds: DataSource,
+    @InjectRepository(Supplier) private readonly supplierRepo: Repository<Supplier>,
+    @InjectRepository(SupplierAccountEntry) private readonly saeRepo: Repository<SupplierAccountEntry>,
+  ) {}
+
+  async createAdjustment(supplierId: string, amount: number, description?: string) {
+    return this.ds.transaction(async manager => {
+      const supplier = await manager.findOneByOrFail(Supplier, { id: supplierId });
+
+      // ✅ todo en number
+      const newBalance = supplier.totalDebtCache + amount;
+      supplier.totalDebtCache = Math.max(newBalance, 0);
+      await manager.save(supplier);
+
+      const entry = manager.create(SupplierAccountEntry, {
+        supplier,
+        type: SupplierAccountEntryType.ADJUSTMENT,
+        amount,
+        balanceAfter: supplier.totalDebtCache,
+        description: description ?? 'Ajuste manual',
+      });
+
+      return manager.save(entry);
+    });
   }
 
-  findAll() {
-    return `This action returns all supplierAccountEntry`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} supplierAccountEntry`;
-  }
-
-  update(id: number, updateSupplierAccountEntryDto: UpdateSupplierAccountEntryDto) {
-    return `This action updates a #${id} supplierAccountEntry`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} supplierAccountEntry`;
+  async listBySupplier(supplierId: string) {
+    return this.saeRepo.find({
+      where: { supplier: { id: supplierId } },
+      order: { createdAt: 'DESC' },
+    });
   }
 }

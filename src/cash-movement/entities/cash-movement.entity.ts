@@ -1,5 +1,6 @@
 import { Column, PrimaryGeneratedColumn, Entity, ManyToOne, JoinColumn } from 'typeorm';
 import { CashRegister } from 'src/cash-register/entities/cash-register.entity';
+import { SupplierPayment } from 'src/supplier-payment/entities/supplier-payment.entity';
 
 @Entity('cash_movements')
 export class CashMovement {
@@ -32,4 +33,8 @@ export class CashMovement {
   @ManyToOne(() => CashRegister, (cr) => cr.cashMovements)
   @JoinColumn({ name: 'cashRegisterId' })
   cashRegister: CashRegister;
+
+  @ManyToOne(() => SupplierPayment, sp => sp.cashMovements, { nullable: true })
+relatedSupplierPayment?: SupplierPayment;
+
 }

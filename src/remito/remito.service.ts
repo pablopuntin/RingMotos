@@ -1,26 +1,33 @@
+// remitos/remitos.service.ts
 import { Injectable } from '@nestjs/common';
-import { CreateRemitoDto } from './dto/create-remito.dto';
-import { UpdateRemitoDto } from './dto/update-remito.dto';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Remito } from './entities/remito.entity';
+import { Sale } from 'src/sale/entities/sale.entity';
 
 @Injectable()
-export class RemitoService {
-  create(createRemitoDto: CreateRemitoDto) {
-    return 'This action adds a new remito';
+export class RemitosService {
+  constructor(
+    @InjectRepository(Remito) private readonly remitoRepo: Repository<Remito>,
+    @InjectRepository(Sale) private readonly saleRepo: Repository<Sale>,
+  ) {}
+
+  async createForSale(saleId: string, remitoNumber?: string, format = 'A4') {
+    const sale = await this.saleRepo.findOneByOrFail({ id: saleId });
+    const number = remitoNumber ?? await this.generateNumber();
+    const remito = this.remitoRepo.create({ sale, remitoNumber: number, format, status: 'PENDING' });
+    return this.remitoRepo.save(remito);
   }
 
-  findAll() {
-    return `This action returns all remito`;
+  async markPrinted(remitoId: string) {
+    const remito = await this.remitoRepo.findOneByOrFail({ id: remitoId });
+    remito.status = 'PRINTED';
+    remito.printedAt = new Date();
+    return this.remitoRepo.save(remito);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} remito`;
-  }
-
-  update(id: number, updateRemitoDto: UpdateRemitoDto) {
-    return `This action updates a #${id} remito`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} remito`;
+  private async generateNumber() {
+    // Ejemplo simple: prefijo y timestamp
+    return `R-${Date.now()}`;
   }
 }

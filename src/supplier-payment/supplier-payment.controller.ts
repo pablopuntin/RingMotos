@@ -1,34 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { SupplierPaymentService } from './supplier-payment.service';
-import { CreateSupplierPaymentDto } from './dto/create-supplier-payment.dto';
-import { UpdateSupplierPaymentDto } from './dto/update-supplier-payment.dto';
+// supplier-payments/supplier-payments.controller.ts
+import { Controller, Post, Body, Param } from '@nestjs/common';
+import { SupplierPaymentsService } from './supplier-payment.service';
 
-@Controller('supplier-payment')
-export class SupplierPaymentController {
-  constructor(private readonly supplierPaymentService: SupplierPaymentService) {}
+@Controller('supplier-payments')
+export class SupplierPaymentsController {
+  constructor(private readonly service: SupplierPaymentsService) {}
 
   @Post()
-  create(@Body() createSupplierPaymentDto: CreateSupplierPaymentDto) {
-    return this.supplierPaymentService.create(createSupplierPaymentDto);
-  }
+  create(@Body() dto: any) { return this.service.create(dto); }
 
-  @Get()
-  findAll() {
-    return this.supplierPaymentService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.supplierPaymentService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSupplierPaymentDto: UpdateSupplierPaymentDto) {
-    return this.supplierPaymentService.update(+id, updateSupplierPaymentDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.supplierPaymentService.remove(+id);
-  }
+  @Post(':id/reverse')
+  reverse(@Param('id') id: string) { return this.service.reverse(id); }
 }
