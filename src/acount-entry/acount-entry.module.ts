@@ -14,6 +14,7 @@ import { Payment } from 'src/payment/entities/payment.entity';
       Client,
       Sale,
       Payment,
+      
     ]),
   ],
   controllers: [AccountEntryController],

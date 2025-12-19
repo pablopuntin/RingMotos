@@ -26,6 +26,7 @@ import { SupplierPaymentModule } from './supplier-payment/supplier-payment.modul
 import { SupplierAccountEntryModule } from './supplier-account-entry/supplier-account-entry.module';
 import { Sale } from './sale/entities/sale.entity';
 import { ClientsSeed } from './common/seeds/seedconsumidorFinal';
+import { AccountAdjustmentModule } from './account-adjustment/account-adjustment.module';
 
 @Module({
   imports: [
@@ -55,7 +56,8 @@ import { ClientsSeed } from './common/seeds/seedconsumidorFinal';
     PurchaseModule,
     PurchaseItemModule,
     SupplierPaymentModule,
-    SupplierAccountEntryModule
+    SupplierAccountEntryModule,
+    AccountAdjustmentModule
   ],
   providers: [InitialSeeder, ClientsSeed]
 })
