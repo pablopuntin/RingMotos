@@ -10,11 +10,14 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SalesService } from './sale.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { AddSaleItemDto } from './dto/create-items.dto';
+import { RemitosService } from 'src/remito/remito.service';
 
 @ApiTags('Sales')
 @Controller('sales')
 export class SalesController {
-  constructor(private readonly salesService: SalesService) {}
+  constructor(private readonly salesService: SalesService,
+    private readonly remitosService: RemitosService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Crear venta (DRAFT)' })
@@ -54,4 +57,12 @@ export class SalesController {
   findOne(@Param('id') id: string) {
     return this.salesService.findOne(id);
   }
+
+  @Post('ventas/nueva')
+async nuevaVenta(@Body() dto: CreateSaleDto) {
+  const sale = await this.salesService.create(dto);
+  const remito = await this.remitosService.createForSale(sale.id);
+  return { sale, remito };
+}
+
 }
