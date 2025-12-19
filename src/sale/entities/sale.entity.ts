@@ -54,7 +54,7 @@
 //   remito: Remito;
 // }
 
-import { Column, PrimaryGeneratedColumn, Entity, ManyToOne, OneToMany, OneToOne, CreateDateColumn } from 'typeorm';
+import { Column, PrimaryGeneratedColumn, Entity, ManyToOne, OneToMany, OneToOne, CreateDateColumn, JoinColumn } from 'typeorm';
 import { Client } from 'src/client/entities/client.entity';
 import { SaleItem } from 'src/sale-item/entities/sale-item.entity';
 import { PaymentAllocation } from 'src/payment-allocation/entities/payment-allocation.entity';
@@ -96,7 +96,14 @@ export class Sale {
   @OneToMany(() => AccountEntry, (ae) => ae.sale)
   accountEntries: AccountEntry[];
 
- @OneToOne(() => Remito, (remito) => remito.sale, { cascade: true })
-remito: Remito;
+//  @OneToOne(() => Remito, (remito) => remito.sale, { cascade: true })
+// remito: Remito;
+
+@OneToOne(() => Remito, (remito) => remito.sale, {
+  nullable: true,
+})
+@JoinColumn() // 👈 ESTO ES OBLIGATORIO
+remito?: Remito;
+
 
 }
