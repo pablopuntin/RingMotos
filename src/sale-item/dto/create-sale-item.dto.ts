@@ -1,8 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsInt, IsNumber, Min } from 'class-validator';
 
 export class CreateSaleItemDto {
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ required: false })
   @IsOptional()
   @IsString()
   productId?: string;
