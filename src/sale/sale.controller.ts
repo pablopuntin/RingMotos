@@ -11,6 +11,7 @@ import { SalesService } from './sale.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { AddSaleItemDto } from './dto/create-items.dto';
 import { RemitosService } from 'src/remito/remito.service';
+import { CreateSaleItemDto } from 'src/sale-item/dto/create-sale-item.dto';
 
 @ApiTags('Sales')
 @Controller('sales')
@@ -58,11 +59,5 @@ export class SalesController {
     return this.salesService.findOne(id);
   }
 
-  @Post('ventas/nueva')
-async nuevaVenta(@Body() dto: CreateSaleDto) {
-  const sale = await this.salesService.create(dto);
-  const remito = await this.remitosService.createForSale(sale.id);
-  return { sale, remito };
-}
 
 }

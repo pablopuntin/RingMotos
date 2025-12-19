@@ -11,6 +11,7 @@ import { Client } from 'src/client/entities/client.entity';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { AddSaleItemDto } from './dto/create-items.dto';
 import { AccountEntry } from 'src/acount-entry/entities/acount-entry.entity';
+import { RemitosService } from 'src/remito/remito.service';
 
 @Injectable()
 export class SalesService {
@@ -24,7 +25,8 @@ export class SalesService {
     @InjectRepository(Client)
     private readonly clientRepo: Repository<Client>,
 
-    private readonly dataSource: DataSource
+    private readonly dataSource: DataSource,
+    private readonly remitosService: RemitosService,
   ) {}
 
   /* =========================
