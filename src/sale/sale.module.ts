@@ -5,9 +5,11 @@ import { SalesController } from './sale.controller';
 import { SalesService } from './sale.service';
 import { SaleItem } from 'src/sale-item/entities/sale-item.entity';
 import { Client } from 'src/client/entities/client.entity';
+import { RemitoModule } from 'src/remito/remito.module';
+
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Sale, SaleItem, Client ])],
+    imports: [TypeOrmModule.forFeature([Sale, SaleItem, Client ]), RemitoModule],
 
   controllers: [SalesController],
   providers: [SalesService]

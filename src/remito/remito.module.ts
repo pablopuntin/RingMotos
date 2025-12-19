@@ -9,5 +9,6 @@ import { Sale } from 'src/sale/entities/sale.entity';
   imports: [TypeOrmModule.forFeature([Remito, Sale])],
   controllers: [RemitosController],
   providers: [RemitosService],
+  exports: [RemitosService]
 })
 export class RemitoModule {}
