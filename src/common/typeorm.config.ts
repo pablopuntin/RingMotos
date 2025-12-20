@@ -41,6 +41,7 @@ export const getTypeOrmConfig = (
     url,
     autoLoadEntities: true,
     synchronize: true, // ⚠️ en prod real se pone false
+     dropSchema: false,
     ssl: {
       rejectUnauthorized: true
     }

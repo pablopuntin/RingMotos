@@ -120,7 +120,7 @@ export class SalesService {
     const lineTotal = dto.qty * dto.unitPrice;
 
     const item = manager.create(SaleItem, {
-      sale: { id: sale.id }, // 🔥 CLAVE
+      sale: { id: sale.id },
       productId: dto.productId,
       description: dto.description,
       qty: dto.qty,
@@ -130,7 +130,14 @@ export class SalesService {
 
     await manager.save(SaleItem, item);
 
-    sale.totalAmount = Number(sale.totalAmount) + lineTotal;
+    // 🔥 recalcular total real
+    const { sum } = await manager
+      .createQueryBuilder(SaleItem, 'item')
+      .select('SUM(item.lineTotal)', 'sum')
+      .where('item.saleId = :saleId', { saleId })
+      .getRawOne();
+
+    sale.totalAmount = Number(sum ?? 0);
     await manager.save(Sale, sale);
 
     return item;
