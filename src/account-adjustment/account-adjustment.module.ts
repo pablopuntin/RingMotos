@@ -4,6 +4,7 @@ import { AccountAdjustmentController } from './account-adjustment.controller';
 import { AccountEntry } from 'src/acount-entry/entities/acount-entry.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Client } from 'src/client/entities/client.entity';
+import { Sale } from 'src/sale/entities/sale.entity';
 
 // @Module({
 //   imports: [
@@ -19,7 +20,7 @@ import { Client } from 'src/client/entities/client.entity';
     TypeOrmModule.forFeature([
       AccountEntry,
       Client,
-      //Sale, // opcional si lo referenciás
+      Sale // opcional si lo referenciás
     ]),
   ],
   controllers: [AccountAdjustmentController],
