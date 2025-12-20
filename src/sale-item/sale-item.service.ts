@@ -49,12 +49,13 @@ export class SaleItemService {
       const lineTotal = dto.qty * dto.unitPrice;
 
       const item = manager.create(SaleItem, {
-        sale,
+        //sale,
+        sale: { id: sale.id } as Sale,
         productId: dto.productId,
         description: dto.description,
         qty: dto.qty,
         unitPrice: dto.unitPrice,
-        lineTotal,
+        lineTotal
       });
 
       await manager.save(item);
