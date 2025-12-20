@@ -31,8 +31,14 @@ export class Sale {
   @Column({ type: 'timestamp', nullable: true })
   printedAt: Date;
 
-  @OneToMany(() => SaleItem, (item) => item.sale)
-  items: SaleItem[];
+  // @OneToMany(() => SaleItem, (item) => item.sale)
+  // items: SaleItem[];
+
+  @OneToMany(() => SaleItem, (item) => item.sale, {
+  cascade: true,
+})
+items: SaleItem[];
+
 
   @OneToMany(() => PaymentAllocation, (pa) => pa.sale)
   paymentAllocations: PaymentAllocation[];

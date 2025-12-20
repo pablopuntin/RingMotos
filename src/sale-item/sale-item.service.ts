@@ -49,8 +49,8 @@ export class SaleItemService {
       const lineTotal = dto.qty * dto.unitPrice;
 
       const item = manager.create(SaleItem, {
-        //sale,
-        sale: { id: sale.id } as Sale,
+        sale,
+        //sale: { id: sale.id } as Sale,
         productId: dto.productId,
         description: dto.description,
         qty: dto.qty,
