@@ -74,37 +74,69 @@ export class SalesService {
      Agregar ítem
   ========================== */
 
+  // async addItem(saleId: string, dto: AddSaleItemDto) {
+  //   return this.dataSource.transaction(async manager => {
+  //     const sale = await manager.findOne(Sale, {
+  //       where: { id: saleId },
+  //       relations: ['items', 'remito'],
+  //     });
+
+  //     if (!sale) throw new NotFoundException('Venta no encontrada');
+
+  //     this.assertEditable(sale);
+
+  //     const lineTotal = dto.qty * dto.unitPrice;
+
+  //     const item = manager.create(SaleItem, {
+  //       sale,
+  //       productId: dto.productId,
+  //       description: dto.description,
+  //       qty: dto.qty,
+  //       unitPrice: dto.unitPrice,
+  //       lineTotal,
+  //     });
+
+  //     await manager.save(item);
+
+  //     sale.totalAmount = Number(sale.totalAmount) + lineTotal;
+
+  //     await manager.save(sale);
+
+  //     return item;
+  //   });
+  // }
+
   async addItem(saleId: string, dto: AddSaleItemDto) {
-    return this.dataSource.transaction(async manager => {
-      const sale = await manager.findOne(Sale, {
-        where: { id: saleId },
-        relations: ['items', 'remito'],
-      });
-
-      if (!sale) throw new NotFoundException('Venta no encontrada');
-
-      this.assertEditable(sale);
-
-      const lineTotal = dto.qty * dto.unitPrice;
-
-      const item = manager.create(SaleItem, {
-        sale,
-        productId: dto.productId,
-        description: dto.description,
-        qty: dto.qty,
-        unitPrice: dto.unitPrice,
-        lineTotal,
-      });
-
-      await manager.save(item);
-
-      sale.totalAmount = Number(sale.totalAmount) + lineTotal;
-
-      await manager.save(sale);
-
-      return item;
+  return this.dataSource.transaction(async manager => {
+    const sale = await manager.findOne(Sale, {
+      where: { id: saleId },
+      relations: ['remito'],
     });
-  }
+
+    if (!sale) throw new NotFoundException('Venta no encontrada');
+
+    this.assertEditable(sale);
+
+    const lineTotal = dto.qty * dto.unitPrice;
+
+    const item = manager.create(SaleItem, {
+      sale: { id: sale.id }, // 🔥 CLAVE
+      productId: dto.productId,
+      description: dto.description,
+      qty: dto.qty,
+      unitPrice: dto.unitPrice,
+      lineTotal,
+    });
+
+    await manager.save(SaleItem, item);
+
+    sale.totalAmount = Number(sale.totalAmount) + lineTotal;
+    await manager.save(Sale, sale);
+
+    return item;
+  });
+}
+
 
   /* =========================
      Confirmar venta

@@ -10,11 +10,13 @@ export class SaleItem {
   // @ManyToOne(() => Sale, (sale) => sale.items)
   // sale: Sale;
 
-  @ManyToOne(() => Sale, (sale) => sale.items, {
+ @ManyToOne(() => Sale, (sale) => sale.items, {
+  nullable: false,
   onDelete: 'CASCADE',
 })
 @JoinColumn({ name: 'saleId' })
 sale: Sale;
+
 
    @Column({ nullable: true })
   productId: string;
