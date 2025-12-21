@@ -203,14 +203,14 @@ export class ClientsService {
     });
   }
 
-  // ========================
-  // Imagen
-  // ========================
-  async updateImage(id: string, imgURL: string): Promise<Client> {
-    const client = await this.findOne(id);
-    this.ensureNotFinalConsumer(client);
+  // clients.service.ts
+async updateImage(id: string, imageUrl: string): Promise<Client> {
+  const client = await this.findOne(id);
+  this.ensureNotFinalConsumer(client);
 
-    client.imgURL = imgURL;
-    return this.clientsRepo.save(client);
-  }
+  client.imgUrl = imageUrl; // asegúrate que tu entidad tenga este campo
+  return this.clientsRepo.save(client);
+}
+
+
 }
