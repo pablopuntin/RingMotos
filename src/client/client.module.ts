@@ -3,9 +3,12 @@ import { ClientsService } from './client.service';
 import { ClientsController } from './client.controller';
 import { Client } from './entities/client.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Client])],
+  imports: [TypeOrmModule.forFeature([Client]),
+CloudinaryModule
+],
 
   controllers: [ClientsController],
   providers: [ClientsService]

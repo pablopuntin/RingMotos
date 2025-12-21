@@ -20,11 +20,19 @@ import { ClientsService } from './client.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './entities/client.entity';
+import { UseInterceptors } from '@nestjs/common';
+import { ImageFileInterceptor } from 'src/common/interceptors/image-file.interceptor';
+import { UploadedFile } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @ApiTags('Clients')
 @Controller('clients')
 export class ClientsController {
-  constructor(private readonly clientsService: ClientsService) {}
+  constructor(private readonly clientsService: ClientsService,
+    private readonly cloudinaryService: CloudinaryService
+  ) 
+  {}
 
   @Get('final-consumer')
   @ApiOperation({
@@ -107,4 +115,22 @@ export class ClientsController {
   remove(@Param('id') id: string) {
     return this.clientsService.remove(id);
   }
+
+  @Post(':id/image')
+@UseInterceptors(ImageFileInterceptor())
+async uploadClientImage(
+  @Param('id') id: string,
+  @UploadedFile() file: Express.Multer.File,
+) {
+  if (!file) {
+    throw new BadRequestException('No se envió ninguna imagen');
+  }
+
+  const imageUrl = await this.cloudinaryService.uploadImage(
+    file,
+    `client-${id}`,
+  );
+
+  return this.clientsService.updateImage(id, imageUrl);
+}
 }
