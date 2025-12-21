@@ -92,5 +92,5 @@ export class CreateClientDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
-  imgURL?: string;
+  imgUrl?: string;
 }

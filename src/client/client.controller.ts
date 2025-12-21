@@ -15,6 +15,7 @@ import {
   ApiBody,
   ApiParam,
   ApiQuery,
+  ApiConsumes
 } from '@nestjs/swagger';
 import { ClientsService } from './client.service';
 import { CreateClientDto } from './dto/create-client.dto';
@@ -25,6 +26,8 @@ import { ImageFileInterceptor } from 'src/common/interceptors/image-file.interce
 import { UploadedFile } from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+
 
 @ApiTags('Clients')
 @Controller('clients')
@@ -45,16 +48,19 @@ export class ClientsController {
     return this.clientsService.getFinalConsumer();
   }
 
-  @Post()
-  @ApiOperation({
-    summary: 'Crear cliente',
-    description: 'Crea un nuevo cliente (no Consumidor Final) con deuda inicial en 0.',
-  })
-  @ApiBody({ type: CreateClientDto })
-  @ApiResponse({ status: 201, description: 'Cliente creado exitosamente', type: Client })
-  create(@Body() dto: CreateClientDto) {
-    return this.clientsService.create(dto);
-  }
+  // @Post()
+  // @ApiOperation({
+  //   summary: 'Crear cliente',
+  //   description: 'Crea un nuevo cliente (no Consumidor Final) con deuda inicial en 0.',
+  // })
+  // @ApiBody({ type: CreateClientDto })
+  // @ApiResponse({ status: 201, description: 'Cliente creado exitosamente', type: Client })
+  // create(@Body() dto: CreateClientDto) {
+  //   return this.clientsService.create(dto);
+  // }
+
+  //refactor con foto en swagger
+  @Post() @UseInterceptors(ImageFileInterceptor()) @ApiOperation({ summary: 'Crear cliente con foto opcional' }) @ApiConsumes('multipart/form-data') @ApiBody({ schema: { type: 'object', properties: { name: { type: 'string' }, lastName: { type: 'string' }, email: { type: 'string' }, dni: { type: 'string' }, file: { type: 'string', format: 'binary', description: 'Foto opcional del cliente', }, }, }, }) @ApiResponse({ status: 201, description: 'Cliente creado exitosamente', type: Client }) async create( @Body() dto: CreateClientDto, @UploadedFile() file?: Express.Multer.File, ) { let imgUrl: string | undefined; if (file) { imgUrl = await this.cloudinaryService.uploadImage(file, `client-${dto.email ?? Date.now()}`); } return this.clientsService.create({ ...dto, imgUrl }); }
 
   @Get()
   @ApiOperation({
@@ -89,19 +95,39 @@ export class ClientsController {
     return this.clientsService.findOne(id);
   }
 
-  @Put(':id')
-  @ApiOperation({
-    summary: 'Actualizar cliente',
-    description: 'Actualiza los datos de un cliente. No se permite modificar Consumidor Final.',
-  })
-  @ApiParam({ name: 'id', type: 'string', description: 'ID del cliente' })
-  @ApiBody({ type: UpdateClientDto })
-  @ApiResponse({ status: 200, description: 'Cliente actualizado', type: Client })
-  @ApiResponse({ status: 400, description: 'Consumidor Final no puede modificarse' })
-  @ApiResponse({ status: 404, description: 'Cliente no encontrado' })
-  update(@Param('id') id: string, @Body() dto: UpdateClientDto) {
-    return this.clientsService.update(id, dto);
-  }
+  // @Put(':id')
+  // @ApiOperation({
+  //   summary: 'Actualizar cliente',
+  //   description: 'Actualiza los datos de un cliente. No se permite modificar Consumidor Final.',
+  // })
+  // @ApiParam({ name: 'id', type: 'string', description: 'ID del cliente' })
+  // @ApiBody({ type: UpdateClientDto })
+  // @ApiResponse({ status: 200, description: 'Cliente actualizado', type: Client })
+  // @ApiResponse({ status: 400, description: 'Consumidor Final no puede modificarse' })
+  // @ApiResponse({ status: 404, description: 'Cliente no encontrado' })
+  // update(@Param('id') id: string, @Body() dto: UpdateClientDto) {
+  //   return this.clientsService.update(id, dto);
+  // }
+
+  //refactor con foto en swagger
+  @Post(':id/image')
+@UseInterceptors(ImageFileInterceptor())
+@ApiOperation({ summary: 'Subir/actualizar imagen del cliente' })
+@ApiConsumes('multipart/form-data')
+@ApiBody({
+  schema: {
+    type: 'object',
+    properties: {
+      file: {
+        type: 'string',
+        format: 'binary',
+        description: 'Imagen JPG/PNG del cliente',
+      },
+    },
+  },
+})
+
+
 
   @Delete(':id')
   @ApiOperation({
