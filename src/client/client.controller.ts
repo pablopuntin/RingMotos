@@ -283,31 +283,44 @@ export class ClientsController {
     return this.clientsService.remove(id);
   }
 
-  @Post(':id/image')
-  @UseInterceptors(ImageFileInterceptor())
-  @ApiOperation({ summary: 'Subir/actualizar imagen del cliente' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-          description: 'Imagen JPG/PNG del cliente',
-        },
-      },
-    },
-  })
-  async uploadClientImage(
-    @Param('id') id: string,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
-    if (!file) {
-      throw new BadRequestException('No se envió ninguna imagen');
-    }
+  // @Post(':id/image')
+  // @UseInterceptors(ImageFileInterceptor())
+  // @ApiOperation({ summary: 'Subir/actualizar imagen del cliente' })
+  // @ApiConsumes('multipart/form-data')
+  // @ApiBody({
+  //   schema: {
+  //     type: 'object',
+  //     properties: {
+  //       file: {
+  //         type: 'string',
+  //         format: 'binary',
+  //         description: 'Imagen JPG/PNG del cliente',
+  //       },
+  //     },
+  //   },
+  // })
 
-    const imgUrl = await this.cloudinaryService.uploadImage(file, `client-${id}`);
-    return this.clientsService.updateImage(id, imgUrl);
-  }
+  //refactor
+  @Post(':id/image')
+@UseInterceptors(ImageFileInterceptor())
+@ApiConsumes('multipart/form-data')
+@ApiBody({
+  schema: {
+    type: 'object',
+    properties: {
+      file: { type: 'string', format: 'binary' },
+    },
+  },
+})
+async uploadClientImage(
+  @Param('id') id: string,
+  @UploadedFile() file: Express.Multer.File,
+) {
+  if (!file) throw new BadRequestException('No se envió ninguna imagen');
+
+  const imgUrl = await this.cloudinaryService.uploadImage(file, `client-${id}`);
+  return this.clientsService.updateImage(id, imgUrl);
+}
+
+ 
 }
