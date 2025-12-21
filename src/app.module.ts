@@ -34,7 +34,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     ConfigModule.forRoot({
       isGlobal: true
     }),
-
+    
     // 👇 AQUI activas tu configuración de TypeORM
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
