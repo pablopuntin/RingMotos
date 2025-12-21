@@ -175,13 +175,30 @@ export class ClientsService {
     return client;
   }
 
-  async update(id: string, dto: UpdateClientDto): Promise<Client> {
-    const client = await this.findOne(id);
-    this.ensureNotFinalConsumer(client);
+  // async update(id: string, dto: UpdateClientDto): Promise<Client> {
+  //   const client = await this.findOne(id);
+  //   this.ensureNotFinalConsumer(client);
 
-    Object.assign(client, dto);
-    return this.clientsRepo.save(client);
+  //   Object.assign(client, dto);
+  //   return this.clientsRepo.save(client);
+  // }
+
+  //refactor con cloudinary
+  async update(id: string, dto: UpdateClientDto & { imgUrl?: string }): Promise<Client> {
+  const client = await this.findOne(id);
+  this.ensureNotFinalConsumer(client);
+
+  // Merge de campos opcionales
+  Object.assign(client, dto);
+
+  // Si viene una nueva imagen, actualizamos el campo
+  if (dto.imgUrl) {
+    client.imgUrl = dto.imgUrl;
   }
+
+  return this.clientsRepo.save(client);
+}
+
 
   async remove(id: string): Promise<void> {
     const client = await this.findOne(id);

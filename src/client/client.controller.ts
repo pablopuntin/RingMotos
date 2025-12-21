@@ -266,14 +266,55 @@ export class ClientsController {
     return this.clientsService.findOne(id);
   }
 
+  // @Put(':id')
+  // @ApiOperation({ summary: 'Actualizar cliente' })
+  // @ApiParam({ name: 'id', type: 'string' })
+  // @ApiBody({ type: UpdateClientDto })
+  // @ApiResponse({ status: 200, type: Client })
+  // update(@Param('id') id: string, @Body() dto: UpdateClientDto) {
+  //   return this.clientsService.update(id, dto);
+  // }
+
+  //refactor con cloudinary
   @Put(':id')
-  @ApiOperation({ summary: 'Actualizar cliente' })
-  @ApiParam({ name: 'id', type: 'string' })
-  @ApiBody({ type: UpdateClientDto })
-  @ApiResponse({ status: 200, type: Client })
-  update(@Param('id') id: string, @Body() dto: UpdateClientDto) {
-    return this.clientsService.update(id, dto);
+@UseInterceptors(ImageFileInterceptor())
+@ApiOperation({ summary: 'Actualizar cliente con foto opcional' })
+@ApiConsumes('multipart/form-data')
+@ApiBody({
+  schema: {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      lastName: { type: 'string' },
+      email: { type: 'string' },
+      dni: { type: 'string' },
+      phone: { type: 'string' },
+      address: { type: 'string' },
+      file: {
+        type: 'string',
+        format: 'binary',
+        description: 'Foto opcional del cliente',
+      },
+    },
+  },
+})
+@ApiResponse({ status: 200, description: 'Cliente actualizado', type: Client })
+@ApiResponse({ status: 400, description: 'Consumidor Final no puede modificarse' })
+@ApiResponse({ status: 404, description: 'Cliente no encontrado' })
+async update(
+  @Param('id') id: string,
+  @Body() dto: UpdateClientDto,
+  @UploadedFile() file?: Express.Multer.File,
+) {
+  let imgUrl: string | undefined;
+
+  if (file) {
+    imgUrl = await this.cloudinaryService.uploadImage(file, `client-${id}`);
   }
+
+  return this.clientsService.update(id, { ...dto, imgUrl });
+}
+
 
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminar cliente' })
