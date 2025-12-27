@@ -149,29 +149,37 @@ export class SalesService {
      Confirmar venta
   ========================== */
 
-//   async confirm(id: string) {
+//refactor porque no relacionaba items
+// async confirm(id: string) {
 //   return this.dataSource.transaction(async manager => {
 //     const sale = await manager.findOne(Sale, {
 //       where: { id },
-//       relations: ['items', 'client'],
+//       relations: ['client'],
 //     });
 
 //     if (!sale) throw new NotFoundException('Venta no encontrada');
 
-//     if (sale.status !== 'DRAFT') {
-//       throw new ConflictException('La venta no está en borrador');
-//     }
+//     // if (sale.status !== 'DRAFT') {
+//     //   throw new ConflictException('La venta no está en borrador');
+//     // }
+//     //refactor
+    
 
-//     if (!sale.items || sale.items.length === 0) {
+
+//     // ✅ VALIDACIÓN REAL
+//     const itemsCount = await manager.count(SaleItem, {
+//       where: { sale: { id } },
+//     });
+
+//     if (itemsCount === 0) {
 //       throw new ConflictException('La venta no tiene ítems');
 //     }
 
-//     // 1️⃣ confirmar venta
 //     sale.status = 'CONFIRMED';
 //     sale.confirmedAt = new Date();
 //     await manager.save(sale);
 
-//     // 2️⃣ obtener último balance del cliente
+//     // balance cliente
 //     const lastEntry = await manager.findOne(AccountEntry, {
 //       where: { client: { id: sale.client.id } },
 //       order: { createdAt: 'DESC' },
@@ -180,7 +188,6 @@ export class SalesService {
 //     const lastBalance = lastEntry ? Number(lastEntry.balanceAfter) : 0;
 //     const newBalance = lastBalance + Number(sale.totalAmount);
 
-//     // 3️⃣ crear CHARGE
 //     const entry = manager.create(AccountEntry, {
 //       client: sale.client,
 //       type: 'CHARGE',
@@ -193,7 +200,6 @@ export class SalesService {
 
 //     await manager.save(entry);
 
-//     // 4️⃣ cache del cliente
 //     sale.client.totalDebtCache = newBalance;
 //     await manager.save(sale.client);
 
@@ -201,7 +207,6 @@ export class SalesService {
 //   });
 // }
 
-//refactor porque no relacionaba items
 async confirm(id: string) {
   return this.dataSource.transaction(async manager => {
     const sale = await manager.findOne(Sale, {
@@ -211,11 +216,11 @@ async confirm(id: string) {
 
     if (!sale) throw new NotFoundException('Venta no encontrada');
 
+    // 🔁 IDEMPOTENTE
     if (sale.status !== 'DRAFT') {
-      throw new ConflictException('La venta no está en borrador');
+      return sale;
     }
 
-    // ✅ VALIDACIÓN REAL
     const itemsCount = await manager.count(SaleItem, {
       where: { sale: { id } },
     });
@@ -228,13 +233,12 @@ async confirm(id: string) {
     sale.confirmedAt = new Date();
     await manager.save(sale);
 
-    // balance cliente
     const lastEntry = await manager.findOne(AccountEntry, {
       where: { client: { id: sale.client.id } },
       order: { createdAt: 'DESC' },
     });
 
-    const lastBalance = lastEntry ? Number(lastEntry.balanceAfter) : 0;
+    const lastBalance = Number(lastEntry?.balanceAfter ?? 0);
     const newBalance = lastBalance + Number(sale.totalAmount);
 
     const entry = manager.create(AccountEntry, {
