@@ -34,14 +34,14 @@ export class PosController {
   /* =====================================
      ➕ AGREGAR ÍTEM
   ====================================== */
-  @Post('ventas/:id/items')
-  @ApiOperation({ summary: 'Agregar ítem a la venta (POS)' })
-  async addItem(
-    @Param('id') saleId: string,
-    @Body() dto: AddSaleItemDto,
-  ) {
-    return this.salesService.addItem(saleId, dto);
-  }
+  // @Post('ventas/:id/items')
+  // @ApiOperation({ summary: 'Agregar ítem a la venta (POS)' })
+  // async addItem(
+  //   @Param('id') saleId: string,
+  //   @Body() dto: AddSaleItemDto,
+  // ) {
+  //   return this.salesService.addItem(saleId, dto);
+  // }
 
   /* =====================================
      💰 REGISTRAR PAGO (TOTAL o PARCIAL)
