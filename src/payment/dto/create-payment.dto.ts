@@ -14,9 +14,9 @@ export class CreatePaymentDto {
   @IsUUID()
   receivedBy: string;
 
-  @ApiProperty({ example: 'cash-register-uuid' })
-  @IsUUID()
-  cashRegisterId: string;
+  // @ApiProperty({ example: 'cash-register-uuid' })
+  // @IsUUID()
+  // cashRegisterId: string;
 
   @ApiProperty({
     description: 'Aplicaciones del pago a ventas',
