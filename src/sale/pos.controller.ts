@@ -46,39 +46,25 @@ export class PosController {
   /* =====================================
      💰 REGISTRAR PAGO (TOTAL o PARCIAL)
   ====================================== */
-  @Post('ventas/:id/pagos')
-  @ApiOperation({ summary: 'Registrar pago total o parcial' })
-  async registrarPago(
-    @Param('id') saleId: string,
-    @Body() dto: CreatePaymentDto,
-  ) {
-    /**
-     * 1️⃣ Confirmar venta (si no estaba confirmada)
-     *    - Crea AccountEntry CHARGE
-     *    - Genera deuda
-     */
-    await this.salesService.confirm(saleId);
+ @Post('ventas/:id/pagos')
+@ApiOperation({ summary: 'Registrar pago total o parcial' })
+async registrarPago(
+  @Param('id') saleId: string,
+  @Body() dto: CreatePaymentDto,
+) {
+  // 1️⃣ Confirmar venta (regla de negocio en SalesService)
+  await this.salesService.confirm(saleId);
 
-    /**
-     * 2️⃣ Validación simple:
-     *    No permitir pagar 0
-     */
-    if (dto.amount <= 0) {
-      throw new BadRequestException('El monto debe ser mayor a 0');
-    }
+  // 2️⃣ Delegar TODO al PaymentService
+  return this.paymentService.create({
+    ...dto,
+    allocations: [
+      {
+        saleId,
+        amount: dto.amount,
+      },
+    ],
+  });
+}
 
-    /**
-     * 3️⃣ Delegar TODO al PaymentService
-     *    (total o parcial es lo mismo)
-     */
-    return this.paymentService.create({
-      ...dto,
-      allocations: [
-        {
-          saleId,
-          amount: dto.amount,
-        },
-      ],
-    });
-  }
 }
