@@ -15,6 +15,7 @@ import { PaymentModule } from 'src/payment/payment.module';
     imports: [TypeOrmModule.forFeature([Sale, SaleItem, Client ]), RemitoModule, PaymentModule],
 
   controllers: [SalesController, PosController],
-  providers: [SalesService]
+  providers: [SalesService],
+  exports: [SalesService]
 })
 export class SaleModule {}
