@@ -1,7 +1,8 @@
 import { Controller, Body, Post } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { AccountAdjustmentService } from "./account-adjustment.service";
-import { ApplyInterestDto } from './dto/account-adjustment.dto';
+import { ApplyInterestDto } from "./dto/account-interest.dto";
+import { ApplyAdjustmentDto } from "./dto/account-adjustment.dto";
 
 @ApiTags('Account Adjustments') // Agrupa los endpoints en Swagger
 @Controller('account-adjustments')
@@ -10,29 +11,19 @@ export class AccountAdjustmentController {
     private readonly service: AccountAdjustmentService,
   ) {}
 
-  // @Post('interest')
-  // @ApiOperation({ summary: 'Aplicar interés a la cuenta corriente' })
-  // @ApiResponse({ status: 201, description: 'Interés aplicado correctamente' })
-  // @ApiResponse({ status: 400, description: 'Cliente no encontrado o datos inválidos' })
-  // applyInterest(@Body() dto: ApplyInterestDto) {
-  //   return this.service.applyInterest(dto);
-  // }
-
-  //refactor
-  @Post('interest')
-@ApiOperation({ summary: 'Aplicar interés (porcentaje) a la cuenta corriente' })
-@ApiResponse({ status: 201, description: 'Interés aplicado correctamente' })
-@ApiResponse({ status: 400, description: 'Cliente no encontrado o datos inválidos' })
-applyInterest(@Body() dto: ApplyInterestDto) {
-  return this.service.applyInterest(dto);
-}
-
-
-  @Post('adjustment')
-  @ApiOperation({ summary: 'Aplicar ajuste a la cuenta corriente' })
-  @ApiResponse({ status: 201, description: 'Ajuste aplicado correctamente' })
-  @ApiResponse({ status: 400, description: 'Cliente no encontrado o datos inválidos' })
-  applyAdjustment(@Body() dto: ApplyInterestDto) {
-    return this.service.applyAdjustment(dto);
-  }
+  @Post('interest') 
+  @ApiOperation({ summary: 'Aplicar interés (porcentaje positivo o negativo para restar) a la cuenta corriente' }) 
+  @ApiResponse({ status: 201, description: 'Interés aplicado correctamente' }) 
+  @ApiResponse({ status: 400, description: 'Cliente no encontrado o datos inválidos' }) 
+  applyInterest(@Body() dto: ApplyInterestDto) { 
+    return this.service.applyInterest(dto); 
+  } 
+  
+  @Post('adjustment') 
+  @ApiOperation({ summary: 'Aplicar ajuste (monto fijo positivo o negativo para restar) a la cuenta corriente' }) 
+  @ApiResponse({ status: 201, description: 'Ajuste aplicado correctamente' }) 
+  @ApiResponse({ status: 400, description: 'Cliente no encontrado o datos inválidos' }) 
+  applyAdjustment(@Body() dto: ApplyAdjustmentDto) { 
+    return this.service.applyAdjustment(dto); }
+  
 }

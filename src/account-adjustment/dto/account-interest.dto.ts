@@ -1,17 +1,17 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsString, IsUUID, IsNumber, IsOptional } from "class-validator";
 
-export class ApplyAdjustmentDto {
+export class ApplyInterestDto {
   @ApiPropertyOptional({ description: 'Identificador único del cliente', example: 'uuid-cliente' })
   @IsUUID()
   clientId: string;
 
-  @ApiPropertyOptional({ description: 'Monto de ajuste', example: 1500.75 })
+  @ApiPropertyOptional({ description: 'Monto de interés ', example: 15 })
   @IsNumber()
   @IsOptional()
-  amount?: number; 
+  percentage?: number;   // ahora opcional
 
-  @ApiPropertyOptional({ description: 'Descripción del movimiento', example: 'Ajuste fijo, puede ser positivo para amentar un saldo o negativopara restarle un monto al saldo' })
+  @ApiPropertyOptional({ description: 'Descripción del movimiento', example: 'Interés por mora, puede ser positivo para aumentar o negativo para restarle un porcentaje al saldo' })
   @IsString()
   @IsOptional()
   description?: string;
