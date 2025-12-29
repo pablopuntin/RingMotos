@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
 
@@ -17,14 +18,14 @@ async function bootstrap() {
     credentials: true
   });
 
-   // Activar validación global
-  // app.useGlobalPipes(
-  //   new ValidationPipe({
-  //     whitelist: true, // elimina propiedades no declaradas en el DTO
-  //     forbidNonWhitelisted: true, // lanza error si llegan propiedades extra
-  //     transform: true // transforma tipos automáticamente (ej: string -> number)
-  //   })
-  // );
+   //Activar validación global
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // elimina propiedades no declaradas en el DTO
+      forbidNonWhitelisted: true, // lanza error si llegan propiedades extra
+      transform: true // transforma tipos automáticamente (ej: string -> number)
+    })
+  );
 
   const config = new DocumentBuilder()
     .setTitle('Ring Motos API')

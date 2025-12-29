@@ -3,6 +3,7 @@ import {
   IsOptional,
   IsString,
   IsEmail,
+  IsNotEmpty,
 } from 'class-validator';
 
 export class CreateClientDto {
@@ -13,10 +14,12 @@ export class CreateClientDto {
 
   @ApiProperty({ example: 'Juan' })
   @IsString()
+  @IsNotEmpty()
   name: string;
 
   @ApiProperty({ example: 'Perez' })
   @IsString()
+  @IsNotEmpty()
   lastName: string;
 
   @ApiProperty({ example: 'Lote 41', required: false })
