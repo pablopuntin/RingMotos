@@ -7,6 +7,9 @@
 //   Put,
 //   Delete,
 //   Query,
+//   UseInterceptors,
+//   UploadedFile,
+//   BadRequestException,
 // } from '@nestjs/common';
 // import {
 //   ApiTags,
@@ -15,150 +18,188 @@
 //   ApiBody,
 //   ApiParam,
 //   ApiQuery,
-//   ApiConsumes
+//   ApiConsumes,
 // } from '@nestjs/swagger';
 // import { ClientsService } from './client.service';
 // import { CreateClientDto } from './dto/create-client.dto';
 // import { UpdateClientDto } from './dto/update-client.dto';
 // import { Client } from './entities/client.entity';
-// import { UseInterceptors } from '@nestjs/common';
 // import { ImageFileInterceptor } from 'src/common/interceptors/image-file.interceptor';
-// import { UploadedFile } from '@nestjs/common';
-// import { BadRequestException } from '@nestjs/common';
 // import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
-// import { FileInterceptor } from '@nestjs/platform-express';
-
 
 // @ApiTags('Clients')
 // @Controller('clients')
 // export class ClientsController {
-//   constructor(private readonly clientsService: ClientsService,
-//     private readonly cloudinaryService: CloudinaryService
-//   ) 
-//   {}
+//   constructor(
+//     private readonly clientsService: ClientsService,
+//     private readonly cloudinaryService: CloudinaryService,
+//   ) {}
 
 //   @Get('final-consumer')
-//   @ApiOperation({
-//     summary: 'Obtener Consumidor Final',
-//     description: 'Devuelve el cliente marcado como Consumidor Final. Si no existe, lanza error.',
-//   })
-//   @ApiResponse({ status: 200, description: 'Consumidor Final encontrado', type: Client })
+//   @ApiOperation({ summary: 'Obtener Consumidor Final' })
+//   @ApiResponse({ status: 200, type: Client })
 //   @ApiResponse({ status: 404, description: 'Consumidor Final no existe' })
 //   getFinalConsumer() {
 //     return this.clientsService.getFinalConsumer();
 //   }
 
-//   // @Post()
-//   // @ApiOperation({
-//   //   summary: 'Crear cliente',
-//   //   description: 'Crea un nuevo cliente (no Consumidor Final) con deuda inicial en 0.',
-//   // })
-//   // @ApiBody({ type: CreateClientDto })
-//   // @ApiResponse({ status: 201, description: 'Cliente creado exitosamente', type: Client })
-//   // create(@Body() dto: CreateClientDto) {
-//   //   return this.clientsService.create(dto);
-//   // }
-
-//   //refactor con foto en swagger
-//   @Post() @UseInterceptors(ImageFileInterceptor()) @ApiOperation({ summary: 'Crear cliente con foto opcional' }) @ApiConsumes('multipart/form-data') @ApiBody({ schema: { type: 'object', properties: { name: { type: 'string' }, lastName: { type: 'string' }, email: { type: 'string' }, dni: { type: 'string' }, file: { type: 'string', format: 'binary', description: 'Foto opcional del cliente', }, }, }, }) @ApiResponse({ status: 201, description: 'Cliente creado exitosamente', type: Client }) async create( @Body() dto: CreateClientDto, @UploadedFile() file?: Express.Multer.File, ) { let imgUrl: string | undefined; if (file) { imgUrl = await this.cloudinaryService.uploadImage(file, `client-${dto.email ?? Date.now()}`); } return this.clientsService.create({ ...dto, imgUrl }); }
+//   @Post()
+//   @UseInterceptors(ImageFileInterceptor())
+//   @ApiOperation({ summary: 'Crear cliente con foto opcional' })
+//   @ApiConsumes('multipart/form-data')
+//   @ApiBody({
+//     schema: {
+//       type: 'object',
+//       properties: {
+//         name: { type: 'string' },
+//         lastName: { type: 'string' },
+//         email: { type: 'string' },
+//         dni: { type: 'string' },
+//         file: {
+//           type: 'string',
+//           format: 'binary',
+//           description: 'Foto opcional del cliente',
+//         },
+//       },
+//     },
+//   })
+//   @ApiResponse({ status: 201, type: Client })
+//   async create(
+//     @Body() dto: CreateClientDto,
+//     @UploadedFile() file?: Express.Multer.File,
+//   ) {
+//     let imgUrl: string | undefined;
+//     if (file) {
+//       imgUrl = await this.cloudinaryService.uploadImage(
+//         file,
+//         `client-${dto.email ?? Date.now()}`,
+//       );
+//     }
+//     return this.clientsService.create({ ...dto, imgUrl });
+//   }
 
 //   @Get()
-//   @ApiOperation({
-//     summary: 'Listar clientes',
-//     description: 'Devuelve todos los clientes (excepto Consumidor Final), ordenados por apellido.',
-//   })
-//   @ApiResponse({ status: 200, description: 'Listado de clientes', type: [Client] })
+//   @ApiOperation({ summary: 'Listar clientes' })
+//   @ApiResponse({ status: 200, type: [Client] })
 //   findAll() {
 //     return this.clientsService.findAll();
 //   }
 
 //   @Get('search')
-//   @ApiOperation({
-//     summary: 'Buscar clientes',
-//     description: 'Busca clientes por nombre, apellido o DNI usando coincidencia parcial.',
-//   })
-//   @ApiQuery({ name: 'q', type: 'string', description: 'Término de búsqueda' })
-//   @ApiResponse({ status: 200, description: 'Clientes encontrados', type: [Client] })
+//   @ApiOperation({ summary: 'Buscar clientes' })
+//   @ApiQuery({ name: 'q', type: 'string' })
+//   @ApiResponse({ status: 200, type: [Client] })
 //   search(@Query('q') q: string) {
 //     return this.clientsService.search(q);
 //   }
 
 //   @Get(':id')
-//   @ApiOperation({
-//     summary: 'Obtener cliente por ID',
-//     description: 'Devuelve un cliente específico por su ID.',
-//   })
-//   @ApiParam({ name: 'id', type: 'string', description: 'ID del cliente' })
-//   @ApiResponse({ status: 200, description: 'Cliente encontrado', type: Client })
+//   @ApiOperation({ summary: 'Obtener cliente por ID' })
+//   @ApiParam({ name: 'id', type: 'string' })
+//   @ApiResponse({ status: 200, type: Client })
 //   @ApiResponse({ status: 404, description: 'Cliente no encontrado' })
 //   findOne(@Param('id') id: string) {
 //     return this.clientsService.findOne(id);
 //   }
 
 //   // @Put(':id')
-//   // @ApiOperation({
-//   //   summary: 'Actualizar cliente',
-//   //   description: 'Actualiza los datos de un cliente. No se permite modificar Consumidor Final.',
-//   // })
-//   // @ApiParam({ name: 'id', type: 'string', description: 'ID del cliente' })
+//   // @ApiOperation({ summary: 'Actualizar cliente' })
+//   // @ApiParam({ name: 'id', type: 'string' })
 //   // @ApiBody({ type: UpdateClientDto })
-//   // @ApiResponse({ status: 200, description: 'Cliente actualizado', type: Client })
-//   // @ApiResponse({ status: 400, description: 'Consumidor Final no puede modificarse' })
-//   // @ApiResponse({ status: 404, description: 'Cliente no encontrado' })
+//   // @ApiResponse({ status: 200, type: Client })
 //   // update(@Param('id') id: string, @Body() dto: UpdateClientDto) {
 //   //   return this.clientsService.update(id, dto);
 //   // }
 
-//   //refactor con foto en swagger
-//   @Post(':id/image')
+//   //refactor con cloudinary
+//   @Put(':id')
 // @UseInterceptors(ImageFileInterceptor())
-// @ApiOperation({ summary: 'Subir/actualizar imagen del cliente' })
+// @ApiOperation({ summary: 'Actualizar cliente con foto opcional' })
 // @ApiConsumes('multipart/form-data')
 // @ApiBody({
 //   schema: {
 //     type: 'object',
 //     properties: {
+//       name: { type: 'string' },
+//       lastName: { type: 'string' },
+//       email: { type: 'string' },
+//       dni: { type: 'string' },
+//       phone: { type: 'string' },
+//       address: { type: 'string' },
 //       file: {
 //         type: 'string',
 //         format: 'binary',
-//         description: 'Imagen JPG/PNG del cliente',
+//         description: 'Foto opcional del cliente',
 //       },
 //     },
 //   },
 // })
+// @ApiResponse({ status: 200, description: 'Cliente actualizado', type: Client })
+// @ApiResponse({ status: 400, description: 'Consumidor Final no puede modificarse' })
+// @ApiResponse({ status: 404, description: 'Cliente no encontrado' })
+// async update(
+//   @Param('id') id: string,
+//   @Body() dto: UpdateClientDto,
+//   @UploadedFile() file?: Express.Multer.File,
+// ) {
+//   let imgUrl: string | undefined;
 
+//   if (file) {
+//     imgUrl = await this.cloudinaryService.uploadImage(file, `client-${id}`);
+//   }
+
+//   return this.clientsService.update(id, { ...dto, imgUrl });
+// }
 
 
 //   @Delete(':id')
-//   @ApiOperation({
-//     summary: 'Eliminar cliente',
-//     description: 'Elimina un cliente por ID. No se permite eliminar Consumidor Final.',
-//   })
-//   @ApiParam({ name: 'id', type: 'string', description: 'ID del cliente' })
+//   @ApiOperation({ summary: 'Eliminar cliente' })
+//   @ApiParam({ name: 'id', type: 'string' })
 //   @ApiResponse({ status: 200, description: 'Cliente eliminado' })
-//   @ApiResponse({ status: 400, description: 'Consumidor Final no puede eliminarse' })
-//   @ApiResponse({ status: 404, description: 'Cliente no encontrado' })
 //   remove(@Param('id') id: string) {
 //     return this.clientsService.remove(id);
 //   }
 
+//   // @Post(':id/image')
+//   // @UseInterceptors(ImageFileInterceptor())
+//   // @ApiOperation({ summary: 'Subir/actualizar imagen del cliente' })
+//   // @ApiConsumes('multipart/form-data')
+//   // @ApiBody({
+//   //   schema: {
+//   //     type: 'object',
+//   //     properties: {
+//   //       file: {
+//   //         type: 'string',
+//   //         format: 'binary',
+//   //         description: 'Imagen JPG/PNG del cliente',
+//   //       },
+//   //     },
+//   //   },
+//   // })
+
+//   //refactor
 //   @Post(':id/image')
 // @UseInterceptors(ImageFileInterceptor())
+// @ApiConsumes('multipart/form-data')
+// @ApiBody({
+//   schema: {
+//     type: 'object',
+//     properties: {
+//       file: { type: 'string', format: 'binary' },
+//     },
+//   },
+// })
 // async uploadClientImage(
 //   @Param('id') id: string,
 //   @UploadedFile() file: Express.Multer.File,
 // ) {
-//   if (!file) {
-//     throw new BadRequestException('No se envió ninguna imagen');
-//   }
+//   if (!file) throw new BadRequestException('No se envió ninguna imagen');
 
-//   const imgUrl = await this.cloudinaryService.upload(
-//     file,
-//     `client-${id}`,
-//   );
-
-//   return this.clientsService.update(id, imgUrl);
+//   const imgUrl = await this.cloudinaryService.uploadImage(file, `client-${id}`);
+//   return this.clientsService.updateImage(id, imgUrl);
 // }
+
+ 
 // }
 
 //refactor
@@ -200,7 +241,10 @@ export class ClientsController {
   ) {}
 
   @Get('final-consumer')
-  @ApiOperation({ summary: 'Obtener Consumidor Final' })
+  @ApiOperation({
+    summary: 'Obtener Consumidor Final',
+    description: 'Devuelve el cliente marcado como Consumidor Final. Este cliente no puede modificarse ni eliminarse.',
+  })
   @ApiResponse({ status: 200, type: Client })
   @ApiResponse({ status: 404, description: 'Consumidor Final no existe' })
   getFinalConsumer() {
@@ -209,20 +253,23 @@ export class ClientsController {
 
   @Post()
   @UseInterceptors(ImageFileInterceptor())
-  @ApiOperation({ summary: 'Crear cliente con foto opcional' })
+  @ApiOperation({
+    summary: 'Crear cliente con foto opcional',
+    description: 'Permite registrar un nuevo cliente. Si se adjunta una imagen, se sube automáticamente a Cloudinary.',
+  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        name: { type: 'string' },
-        lastName: { type: 'string' },
-        email: { type: 'string' },
-        dni: { type: 'string' },
+        name: { type: 'string', example: 'Juan' },
+        lastName: { type: 'string', example: 'Pérez' },
+        email: { type: 'string', example: 'juan.perez@mail.com' },
+        dni: { type: 'string', example: '12345678' },
         file: {
           type: 'string',
           format: 'binary',
-          description: 'Foto opcional del cliente',
+          description: 'Foto opcional del cliente (JPG/PNG)',
         },
       },
     },
@@ -243,15 +290,15 @@ export class ClientsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Listar clientes' })
+  @ApiOperation({ summary: 'Listar clientes', description: 'Devuelve todos los clientes registrados (excepto Consumidor Final).' })
   @ApiResponse({ status: 200, type: [Client] })
   findAll() {
     return this.clientsService.findAll();
   }
 
   @Get('search')
-  @ApiOperation({ summary: 'Buscar clientes' })
-  @ApiQuery({ name: 'q', type: 'string' })
+  @ApiOperation({ summary: 'Buscar clientes', description: 'Permite buscar clientes por nombre, apellido o DNI.' })
+  @ApiQuery({ name: 'q', type: 'string', example: 'Pérez' })
   @ApiResponse({ status: 200, type: [Client] })
   search(@Query('q') q: string) {
     return this.clientsService.search(q);
@@ -259,109 +306,91 @@ export class ClientsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Obtener cliente por ID' })
-  @ApiParam({ name: 'id', type: 'string' })
+  @ApiParam({ name: 'id', type: 'string', example: 'uuid-cliente' })
   @ApiResponse({ status: 200, type: Client })
   @ApiResponse({ status: 404, description: 'Cliente no encontrado' })
   findOne(@Param('id') id: string) {
     return this.clientsService.findOne(id);
   }
 
-  // @Put(':id')
-  // @ApiOperation({ summary: 'Actualizar cliente' })
-  // @ApiParam({ name: 'id', type: 'string' })
-  // @ApiBody({ type: UpdateClientDto })
-  // @ApiResponse({ status: 200, type: Client })
-  // update(@Param('id') id: string, @Body() dto: UpdateClientDto) {
-  //   return this.clientsService.update(id, dto);
-  // }
-
-  //refactor con cloudinary
   @Put(':id')
-@UseInterceptors(ImageFileInterceptor())
-@ApiOperation({ summary: 'Actualizar cliente con foto opcional' })
-@ApiConsumes('multipart/form-data')
-@ApiBody({
-  schema: {
-    type: 'object',
-    properties: {
-      name: { type: 'string' },
-      lastName: { type: 'string' },
-      email: { type: 'string' },
-      dni: { type: 'string' },
-      phone: { type: 'string' },
-      address: { type: 'string' },
-      file: {
-        type: 'string',
-        format: 'binary',
-        description: 'Foto opcional del cliente',
+  @UseInterceptors(ImageFileInterceptor())
+  @ApiOperation({
+    summary: 'Actualizar cliente con foto opcional',
+    description: 'Permite actualizar datos de un cliente. Si se adjunta una nueva imagen, reemplaza la anterior en Cloudinary.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', example: 'Juan' },
+        lastName: { type: 'string', example: 'Pérez' },
+        email: { type: 'string', example: 'juan.perez@mail.com' },
+        dni: { type: 'string', example: '12345678' },
+        phone: { type: 'string', example: '+54 3857 123456' },
+        address: { type: 'string', example: 'Av. Siempre Viva 123' },
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Foto opcional del cliente (JPG/PNG)',
+        },
       },
     },
-  },
-})
-@ApiResponse({ status: 200, description: 'Cliente actualizado', type: Client })
-@ApiResponse({ status: 400, description: 'Consumidor Final no puede modificarse' })
-@ApiResponse({ status: 404, description: 'Cliente no encontrado' })
-async update(
-  @Param('id') id: string,
-  @Body() dto: UpdateClientDto,
-  @UploadedFile() file?: Express.Multer.File,
-) {
-  let imgUrl: string | undefined;
-
-  if (file) {
-    imgUrl = await this.cloudinaryService.uploadImage(file, `client-${id}`);
+  })
+  @ApiResponse({ status: 200, description: 'Cliente actualizado', type: Client })
+  @ApiResponse({ status: 400, description: 'Consumidor Final no puede modificarse' })
+  @ApiResponse({ status: 404, description: 'Cliente no encontrado' })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateClientDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    let imgUrl: string | undefined;
+    if (file) {
+      imgUrl = await this.cloudinaryService.uploadImage(file, `client-${id}`);
+    }
+    return this.clientsService.update(id, { ...dto, imgUrl });
   }
-
-  return this.clientsService.update(id, { ...dto, imgUrl });
-}
-
 
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminar cliente' })
-  @ApiParam({ name: 'id', type: 'string' })
+  @ApiParam({ name: 'id', type: 'string', example: 'uuid-cliente' })
   @ApiResponse({ status: 200, description: 'Cliente eliminado' })
+  @ApiResponse({ status: 400, description: 'Consumidor Final no puede eliminarse' })
+  @ApiResponse({ status: 404, description: 'Cliente no encontrado' })
   remove(@Param('id') id: string) {
     return this.clientsService.remove(id);
   }
 
-  // @Post(':id/image')
-  // @UseInterceptors(ImageFileInterceptor())
-  // @ApiOperation({ summary: 'Subir/actualizar imagen del cliente' })
-  // @ApiConsumes('multipart/form-data')
-  // @ApiBody({
-  //   schema: {
-  //     type: 'object',
-  //     properties: {
-  //       file: {
-  //         type: 'string',
-  //         format: 'binary',
-  //         description: 'Imagen JPG/PNG del cliente',
-  //       },
-  //     },
-  //   },
-  // })
-
-  //refactor
   @Post(':id/image')
-@UseInterceptors(ImageFileInterceptor())
-@ApiConsumes('multipart/form-data')
-@ApiBody({
-  schema: {
-    type: 'object',
-    properties: {
-      file: { type: 'string', format: 'binary' },
+  @UseInterceptors(ImageFileInterceptor())
+  @ApiOperation({
+    summary: 'Subir/actualizar imagen del cliente',
+    description: 'Permite subir o reemplazar la imagen de un cliente en Cloudinary.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Imagen JPG/PNG del cliente',
+        },
+      },
     },
-  },
-})
-async uploadClientImage(
-  @Param('id') id: string,
-  @UploadedFile() file: Express.Multer.File,
-) {
-  if (!file) throw new BadRequestException('No se envió ninguna imagen');
-
-  const imgUrl = await this.cloudinaryService.uploadImage(file, `client-${id}`);
-  return this.clientsService.updateImage(id, imgUrl);
-}
-
- 
+  })
+  @ApiResponse({ status: 200, description: 'Imagen actualizada correctamente', type: Client })
+  @ApiResponse({ status: 400, description: 'No se envió ninguna imagen o Consumidor Final no puede modificarse' })
+  @ApiResponse({ status: 404, description: 'Cliente no encontrado' })
+  async uploadClientImage(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('No se envió ninguna imagen');
+    const imgUrl = await this.cloudinaryService.uploadImage(file, `client-${id}`);
+    return this.clientsService.updateImage(id, imgUrl);
+  }
 }
