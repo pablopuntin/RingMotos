@@ -6,10 +6,15 @@ export class ApplyInterestDto {
   @IsUUID()
   clientId: string;
 
-  @ApiPropertyOptional({ description: 'Monto de interés o ajuste', example: 1500.75 })
+  @ApiPropertyOptional({ description: 'Monto de interés ', example: 15 })
   @IsNumber()
   @IsOptional()
-  amount?: number;   // ahora opcional
+  percentage?: number;   // ahora opcional
+
+   @ApiPropertyOptional({ description: 'Monto de interés o ajuste', example: 1500.75 })
+  @IsNumber()
+  @IsOptional()
+  amount?: number; 
 
   @ApiPropertyOptional({ description: 'Descripción del movimiento', example: 'Interés por mora' })
   @IsString()

@@ -10,13 +10,23 @@ export class AccountAdjustmentController {
     private readonly service: AccountAdjustmentService,
   ) {}
 
+  // @Post('interest')
+  // @ApiOperation({ summary: 'Aplicar interés a la cuenta corriente' })
+  // @ApiResponse({ status: 201, description: 'Interés aplicado correctamente' })
+  // @ApiResponse({ status: 400, description: 'Cliente no encontrado o datos inválidos' })
+  // applyInterest(@Body() dto: ApplyInterestDto) {
+  //   return this.service.applyInterest(dto);
+  // }
+
+  //refactor
   @Post('interest')
-  @ApiOperation({ summary: 'Aplicar interés a la cuenta corriente' })
-  @ApiResponse({ status: 201, description: 'Interés aplicado correctamente' })
-  @ApiResponse({ status: 400, description: 'Cliente no encontrado o datos inválidos' })
-  applyInterest(@Body() dto: ApplyInterestDto) {
-    return this.service.applyInterest(dto);
-  }
+@ApiOperation({ summary: 'Aplicar interés (porcentaje) a la cuenta corriente' })
+@ApiResponse({ status: 201, description: 'Interés aplicado correctamente' })
+@ApiResponse({ status: 400, description: 'Cliente no encontrado o datos inválidos' })
+applyInterest(@Body() dto: ApplyInterestDto) {
+  return this.service.applyInterest(dto);
+}
+
 
   @Post('adjustment')
   @ApiOperation({ summary: 'Aplicar ajuste a la cuenta corriente' })
