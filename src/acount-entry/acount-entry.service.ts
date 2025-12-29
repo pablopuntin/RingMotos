@@ -6,6 +6,7 @@ import { Client } from 'src/client/entities/client.entity';
 import { Sale } from 'src/sale/entities/sale.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
 import { CreateAccountEntryDto } from './dto/create-acount-entry.dto';
+import { Between } from 'typeorm';
 
 @Injectable()
 export class AccountEntryService {
@@ -87,4 +88,41 @@ let payment: Payment | null = null;
       relations: ['sale', 'payment'],
     });
   }
+
+  // Historial completo de compras y pagos 
+  async getHistory(clientId: string, start?: Date, end?: Date) { 
+    return this.repo.find({ 
+      where: { 
+        client: { id: clientId }, 
+        ...(start && end ? { createdAt: Between(start, end) } : {}), 
+      }, 
+      order: { createdAt: 'ASC' }, 
+      relations: ['sale', 'payment'], 
+    }); 
+  } 
+  // Resumen mensual: compras, pagos, deuda 
+  async getMonthlySummary(clientId: string, month: number, year: number) { 
+    const start = new Date(year, month - 1, 1); 
+    const end = new Date(year, month, 0, 23, 59, 59);
+
+    const entries = await this.getHistory(clientId, start, end); 
+    
+    const charges = entries 
+    .filter(e => e.type === 'CHARGE') 
+    .reduce((sum, e) => sum + Number(e.amount), 0); 
+    
+    const payments = entries 
+    .filter(e => e.type === 'PAYMENT') 
+    .reduce((sum, e) => sum + Number(e.amount), 0); 
+    
+    const adjustments = entries 
+    .filter(e => e.type === 'ADJUSTMENT') 
+    .reduce((sum, e) => sum + Number(e.amount), 0); 
+    
+    const lastBalance = entries.length 
+    ? Number(entries[entries.length - 1].balanceAfter)
+     : 0; 
+     
+     return { charges, payments, adjustments, lastBalance }; 
+    }
 }
