@@ -41,49 +41,98 @@ export class AccountEntryService {
      CREAR MOVIMIENTO
   ===================================================== */
 
+  // async create(dto: CreateAccountEntryDto) {
+  //   const client = await this.clientRepo.findOneBy({ id: dto.clientId });
+  //   if (!client) {
+  //     throw new BadRequestException('Cliente no encontrado');
+  //   }
+
+  //   const lastBalance = await this.getLastBalance(client.id);
+
+  //   let sale: Sale | null = null;
+  //   let payment: Payment | null = null;
+
+  //   if (dto.saleId) {
+  //     sale = await this.saleRepo.findOneBy({ id: dto.saleId });
+  //     if (!sale) {
+  //       throw new BadRequestException('Venta no encontrada');
+  //     }
+  //   }
+
+  //   if (dto.paymentId) {
+  //     payment = await this.paymentRepo.findOneBy({ id: dto.paymentId });
+  //     if (!payment) {
+  //       throw new BadRequestException('Pago no encontrado');
+  //     }
+  //   }
+
+  //   const newBalance =
+  //     dto.type === 'PAYMENT'
+  //       ? lastBalance - Number(dto.amount)
+  //       : lastBalance + Number(dto.amount);
+
+  //   const entry = this.repo.create({
+  //     client,
+  //     type: dto.type,
+  //     sale,
+  //     payment,
+  //     amount: dto.amount,
+  //     balanceAfter: newBalance,
+  //     description: dto.description,
+  //     status: dto.status ?? 'ACTIVE',
+  //   } as Partial<AccountEntry>);
+
+  //   return this.repo.save(entry);
+  // }
+
+  //refactor
   async create(dto: CreateAccountEntryDto) {
-    const client = await this.clientRepo.findOneBy({ id: dto.clientId });
-    if (!client) {
-      throw new BadRequestException('Cliente no encontrado');
-    }
-
-    const lastBalance = await this.getLastBalance(client.id);
-
-    let sale: Sale | null = null;
-    let payment: Payment | null = null;
-
-    if (dto.saleId) {
-      sale = await this.saleRepo.findOneBy({ id: dto.saleId });
-      if (!sale) {
-        throw new BadRequestException('Venta no encontrada');
-      }
-    }
-
-    if (dto.paymentId) {
-      payment = await this.paymentRepo.findOneBy({ id: dto.paymentId });
-      if (!payment) {
-        throw new BadRequestException('Pago no encontrado');
-      }
-    }
-
-    const newBalance =
-      dto.type === 'PAYMENT'
-        ? lastBalance - Number(dto.amount)
-        : lastBalance + Number(dto.amount);
-
-    const entry = this.repo.create({
-      client,
-      type: dto.type,
-      sale,
-      payment,
-      amount: dto.amount,
-      balanceAfter: newBalance,
-      description: dto.description,
-      status: dto.status ?? 'ACTIVE',
-    } as Partial<AccountEntry>);
-
-    return this.repo.save(entry);
+  const client = await this.clientRepo.findOneBy({ id: dto.clientId });
+  if (!client) {
+    throw new BadRequestException('Cliente no encontrado');
   }
+
+  const lastBalance = await this.getLastBalance(client.id);
+
+  // Validar que saleId y paymentId, si vienen, existen
+  const sale = dto.saleId ? await this.saleRepo.findOneBy({ id: dto.saleId }) : null;
+  if (dto.saleId && !sale) {
+    throw new BadRequestException('Venta no encontrada');
+  }
+
+  const payment = dto.paymentId ? await this.paymentRepo.findOneBy({ id: dto.paymentId }) : null;
+  if (dto.paymentId && !payment) {
+    throw new BadRequestException('Pago no encontrado');
+  }
+
+  // Validar que el pago no deje saldo negativo
+  if (dto.type === 'PAYMENT') {
+    const newBalance = lastBalance - Number(dto.amount);
+    if (newBalance < 0) {
+      throw new BadRequestException('El pago excede el saldo pendiente');
+    }
+  }
+
+  // Calcular nuevo saldo
+  const newBalance =
+    dto.type === 'PAYMENT'
+      ? lastBalance - Number(dto.amount)
+      : lastBalance + Number(dto.amount);
+
+  const entry = this.repo.create({
+    client,
+    type: dto.type,
+    sale,
+    payment,
+    amount: dto.amount,
+    balanceAfter: newBalance,
+    description: dto.description,
+    status: dto.status ?? 'ACTIVE',
+  } as Partial<AccountEntry>);
+
+  return this.repo.save(entry);
+}
+
 
   /* =====================================================
      CUENTA CORRIENTE COMPLETA
