@@ -189,4 +189,11 @@ export class ClientsController {
     const imgUrl = await this.cloudinaryService.uploadImage(file, `client-${id}`);
     return this.clientsService.updateImage(id, imgUrl);
   }
+
+  @Get(':clientId/sales')
+@ApiOperation({ summary: 'Ventas de un cliente con detalle de ítems' })
+findClientSales(@Param('clientId') clientId: string) {
+  return this.clientsService.getClientSales(clientId);
+}
+
 }
