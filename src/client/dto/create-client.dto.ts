@@ -10,7 +10,7 @@ export class CreateClientDto {
   @ApiProperty({
     description: 'Documento Nacional de Identidad del cliente',
     example: '22555999',
-    required: false,
+    required: false
   })
   @IsOptional()
   @IsString()
@@ -18,7 +18,7 @@ export class CreateClientDto {
 
   @ApiProperty({
     description: 'Nombre del cliente',
-    example: 'Juan',
+    example: 'Juan'
   })
   @IsString()
   @IsNotEmpty()
@@ -26,7 +26,7 @@ export class CreateClientDto {
 
   @ApiProperty({
     description: 'Apellido del cliente',
-    example: 'Perez',
+    example: 'Perez'
   })
   @IsString()
   @IsNotEmpty()
@@ -35,7 +35,7 @@ export class CreateClientDto {
   @ApiProperty({
     description: 'Dirección del cliente',
     example: 'Lote 41',
-    required: false,
+    required: false
   })
   @IsOptional()
   @IsString()
@@ -44,7 +44,7 @@ export class CreateClientDto {
   @ApiProperty({
     description: 'Teléfono de contacto',
     example: '3857408499',
-    required: false,
+    required: false
   })
   @IsOptional()
   @IsString()
@@ -62,7 +62,7 @@ export class CreateClientDto {
   @ApiProperty({
     description: 'URL de la imagen del cliente (subida a Cloudinary)',
     example: 'https://res.cloudinary.com/demo/image/upload/v1234567890/client-uuid.png',
-    required: false,
+    required: false
   })
   @IsOptional()
   @IsString()

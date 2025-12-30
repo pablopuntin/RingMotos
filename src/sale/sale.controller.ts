@@ -5,14 +5,14 @@ import {
   Get,
   Param,
   Body,
-  Delete,
+  Delete
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiParam,
   ApiBody,
-  ApiResponse,
+  ApiResponse
 } from '@nestjs/swagger';
 import { SalesService } from './sale.service';
 import { CreateSaleDto } from './dto/create-sale.dto';

@@ -29,7 +29,7 @@ export class ClientsService {
 
   async getFinalConsumer(): Promise<Client> {
     const client = await this.clientsRepo.findOne({
-      where: { isFinalConsumer: true },
+      where: { isFinalConsumer: true }
     });
     if (!client) {
       throw new NotFoundException('Consumidor Final no existe');
@@ -40,7 +40,7 @@ export class ClientsService {
   async create(dto: CreateClientDto): Promise<Client> {
     if (dto.email) {
       const existing = await this.clientsRepo.findOne({
-        where: { email: dto.email },
+        where: { email: dto.email }
       });
       if (existing) {
         throw new BadRequestException('Email ya existe');
