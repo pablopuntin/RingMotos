@@ -12,6 +12,8 @@ import { CreateSaleDto } from './dto/create-sale.dto';
 import { AddSaleItemDto } from './dto/create-items.dto';
 import { AccountEntry } from 'src/acount-entry/entities/acount-entry.entity';
 import { RemitosService } from 'src/remito/remito.service';
+import { PaymentService } from 'src/payment/payment.service';
+import { CloseSaleDto } from './dto/close-sale.dto';
 
 @Injectable()
 export class SalesService {
@@ -26,6 +28,8 @@ export class SalesService {
     private readonly clientRepo: Repository<Client>,
 
     private readonly dataSource: DataSource,
+
+    private readonly paymentService: PaymentService
   ) {}
 
   /* =========================
@@ -189,5 +193,117 @@ export class SalesService {
       relations: ['client', 'items', 'paymentAllocations', 'remito'],
     });
   }
+
+  async closeSale(
+  saleId: string,
+  dto: CloseSaleDto,
+) {
+  return this.dataSource.transaction(async manager => {
+    /* =====================
+       1️⃣ Venta
+    ====================== */
+    const sale = await manager.findOne(Sale, {
+      where: { id: saleId },
+      relations: ['client'],
+    });
+
+    if (!sale) {
+      throw new NotFoundException('Venta no encontrada');
+    }
+
+    /* =====================
+       2️⃣ Confirmar venta
+    ====================== */
+    if (sale.status === 'DRAFT') {
+      sale.status = 'CONFIRMED';
+      sale.confirmedAt = new Date();
+      await manager.save(sale);
+    }
+
+    const total = Number(sale.totalAmount);
+    const paid = Number(dto.amount ?? 0);
+
+    if (paid < 0) {
+      throw new ConflictException('Monto inválido');
+    }
+
+    if (paid > total) {
+      throw new ConflictException(
+        'El monto ingresado supera el total de la venta',
+      );
+    }
+
+    /* =====================
+       3️⃣ Pago (si hay)
+    ====================== */
+    // if (paid > 0) {
+    //   await this.paymentService.create({
+    //     amount: paid,
+    //     paymentMethod: dto.paymentMethod,
+    //     receivedBy: dto.receivedBy,
+    //     allocations: [
+    //       {
+    //         saleId: sale.id,
+    //         amount: paid,
+    //       },
+    //     ],
+    //   });
+    // }
+
+    //refactor
+    if (paid > 0) {
+  if (!dto.paymentMethod || !dto.receivedBy) {
+    throw new ConflictException(
+      'paymentMethod y receivedBy son obligatorios cuando hay pago',
+    );
+  }
+
+  await this.paymentService.create({
+    amount: paid,
+    paymentMethod: dto.paymentMethod,
+    receivedBy: dto.receivedBy,
+    allocations: [
+      { saleId: sale.id, amount: paid },
+    ],
+  });
+}
+
+    /* =====================
+       4️⃣ Cuenta corriente
+    ====================== */
+    const remaining = total - paid;
+
+    if (remaining > 0) {
+      const lastEntry = await manager.findOne(AccountEntry, {
+        where: { client: { id: sale.client.id } },
+        order: { createdAt: 'DESC' },
+      });
+
+      const previousBalance = Number(lastEntry?.balanceAfter ?? 0);
+      const newBalance = previousBalance + remaining;
+
+      await manager.save(
+        manager.create(AccountEntry, {
+          client: sale.client,
+          sale,
+          type: 'SALE',
+          amount: remaining,
+          balanceAfter: newBalance,
+          description: `Venta ${sale.id} a cuenta corriente`,
+          status: 'ACTIVE',
+        }),
+      );
+
+      sale.client.totalDebtCache = newBalance;
+      await manager.save(sale.client);
+    }
+
+    /* =====================
+       5️⃣ Refrescar venta
+    ====================== */
+    return this.findOne(sale.id);
+  });
+}
+
 }
 
