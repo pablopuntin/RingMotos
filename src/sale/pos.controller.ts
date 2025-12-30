@@ -57,13 +57,13 @@ export class PosController {
 //   });
 // }
 
-@Post('ventas/:id/pagos')
-async cerrarVenta(
-  @Param('id') saleId: string,
-  @Body() dto: CloseSaleDto,
-) {
-  return this.salesService.closeSale(saleId, dto);
-}
+// @Post('ventas/:id/pagos')
+// async cerrarVenta(
+//   @Param('id') saleId: string,
+//   @Body() dto: CloseSaleDto,
+// ) {
+//   return this.salesService.closeSale(saleId, dto);
+// }
 
 
 }

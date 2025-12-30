@@ -57,7 +57,7 @@ export class SalesController {
   }
 
   @Patch(':id/confirm')
-  @ApiOperation({ summary: 'Confirmar venta' })
+  @ApiOperation({ summary: 'Confirmar venta (sin registrar pago)' })
   @ApiParam({ name: 'id', description: 'ID de la venta' })
   @ApiResponse({ status: 200, type: Sale })
   confirm(@Param('id') id: string) {
@@ -65,7 +65,7 @@ export class SalesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Listar ventas' })
+ @ApiOperation({ summary: 'Detalle de venta con ítems y pagos' })
   @ApiResponse({ status: 200, type: [Sale] })
   findAll() {
     return this.salesService.findAll();
