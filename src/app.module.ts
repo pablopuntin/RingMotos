@@ -28,6 +28,7 @@ import { Sale } from './sale/entities/sale.entity';
 import { ClientsSeed } from './common/seeds/seedconsumidorFinal';
 import { AccountAdjustmentModule } from './account-adjustment/account-adjustment.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { PosModule } from './pos/pos.module';
 
 @Module({
   imports: [
@@ -59,7 +60,8 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     SupplierPaymentModule,
     SupplierAccountEntryModule,
     AccountAdjustmentModule,
-    CloudinaryModule
+    CloudinaryModule,
+    PosModule
   ],
   providers: [InitialSeeder, ClientsSeed]
 })
