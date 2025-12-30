@@ -5,74 +5,39 @@ import {
   Get,
   Param,
   Body,
-  Delete
+  Delete,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiBody,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { SalesService } from './sale.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { AddSaleItemDto } from './dto/create-items.dto';
-import { RemitosService } from 'src/remito/remito.service';
-import { CreateSaleItemDto } from 'src/sale-item/dto/create-sale-item.dto';
+import { Sale } from './entities/sale.entity';
+import { SaleItem } from 'src/sale-item/entities/sale-item.entity';
 
-// @ApiTags('Sales')
-// @Controller('sales')
-// export class SalesController {
-//   constructor(private readonly salesService: SalesService,
-//     private readonly remitosService: RemitosService,
-//   ) {}
-
-//   @Post()
-//   @ApiOperation({ summary: 'Crear venta (DRAFT)' })
-//   create(@Body() dto: CreateSaleDto) {
-//     return this.salesService.create(dto);
-//   }
-
-//   @Post(':id/items')
-//   @ApiOperation({ summary: 'Agregar ítems a la venta' })
-//   addItem(
-//     @Param('id') id: string,
-//     @Body() dto: AddSaleItemDto,
-//   ) {
-//     return this.salesService.addItem(id, dto);
-//   }
-
-//   @Patch(':id/confirm')
-//   @ApiOperation({ summary: 'Confirmar venta' })
-//   confirm(@Param('id') id: string) {
-//     return this.salesService.confirm(id);
-//   }
-
-//   @Patch(':id/cancel')
-//   @ApiOperation({ summary: 'Cancelar venta / base para nota de crédito' })
-//   cancel(@Param('id') id: string) {
-//     return this.salesService.cancel(id);
-//   }
-
-//   @Get()
-//   @ApiOperation({ summary: 'Listar ventas' })
-//   findAll() {
-//     return this.salesService.findAll();
-//   }
-
-//   @Get(':id')
-//   @ApiOperation({ summary: 'Detalle de venta' })
-//   findOne(@Param('id') id: string) {
-//     return this.salesService.findOne(id);
-//   }
-// }
-
-//refactor
 @ApiTags('Sales')
 @Controller('sales')
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Crear venta (DRAFT)' })
+  @ApiBody({ type: CreateSaleDto })
+  @ApiResponse({ status: 201, type: Sale })
   create(@Body() dto: CreateSaleDto) {
     return this.salesService.create(dto);
   }
 
   @Post(':id/items')
+  @ApiOperation({ summary: 'Agregar ítem a una venta' })
+  @ApiParam({ name: 'id', description: 'ID de la venta' })
+  @ApiBody({ type: AddSaleItemDto })
+  @ApiResponse({ status: 201, type: SaleItem })
   addItem(
     @Param('id') id: string,
     @Body() dto: AddSaleItemDto,
@@ -81,23 +46,36 @@ export class SalesController {
   }
 
   @Delete('items/:itemId')
+  @ApiOperation({ summary: 'Eliminar ítem de una venta' })
+  @ApiParam({ name: 'itemId', description: 'ID del ítem' })
+  @ApiResponse({
+    status: 200,
+    schema: { example: { success: true } },
+  })
   removeItem(@Param('itemId') itemId: string) {
     return this.salesService.removeItem(itemId);
   }
 
   @Patch(':id/confirm')
+  @ApiOperation({ summary: 'Confirmar venta' })
+  @ApiParam({ name: 'id', description: 'ID de la venta' })
+  @ApiResponse({ status: 200, type: Sale })
   confirm(@Param('id') id: string) {
     return this.salesService.confirm(id);
   }
 
   @Get()
+  @ApiOperation({ summary: 'Listar ventas' })
+  @ApiResponse({ status: 200, type: [Sale] })
   findAll() {
     return this.salesService.findAll();
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Detalle de venta' })
+  @ApiParam({ name: 'id', description: 'ID de la venta' })
+  @ApiResponse({ status: 200, type: Sale })
   findOne(@Param('id') id: string) {
     return this.salesService.findOne(id);
   }
 }
-

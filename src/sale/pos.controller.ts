@@ -31,19 +31,7 @@ export class PosController {
     return this.salesService.create(dto);
   }
 
-  /* =====================================
-     ➕ AGREGAR ÍTEM
-  ====================================== */
-  // @Post('ventas/:id/items')
-  // @ApiOperation({ summary: 'Agregar ítem a la venta (POS)' })
-  // async addItem(
-  //   @Param('id') saleId: string,
-  //   @Body() dto: AddSaleItemDto,
-  // ) {
-  //   return this.salesService.addItem(saleId, dto);
-  // }
-
-  /* =====================================
+   /* =====================================
      💰 REGISTRAR PAGO (TOTAL o PARCIAL)
   ====================================== */
  @Post('ventas/:id/pagos')
@@ -62,8 +50,8 @@ async registrarPago(
       {
         saleId,
         amount: dto.amount,
-      },
-    ],
+      }
+    ]
   });
 }
 

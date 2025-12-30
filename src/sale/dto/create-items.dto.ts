@@ -1,19 +1,45 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsOptional, IsNumber } from "class-validator";
+// import { ApiProperty } from "@nestjs/swagger";
+// import { IsOptional, IsNumber } from "class-validator";
+
+// export class AddSaleItemDto {
+//   @ApiProperty()
+//   @IsOptional()
+//   productId?: string;
+
+//   @ApiProperty()
+//   description: string;
+
+//   @ApiProperty()
+//   @IsNumber()
+//   qty: number;
+
+//   @ApiProperty()
+//   @IsNumber()
+//   unitPrice: number;
+// }
+
+
+//ref
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsOptional, IsInt, IsNumber, Min } from 'class-validator';
 
 export class AddSaleItemDto {
-  @ApiProperty()
+  @ApiPropertyOptional({ required: false })
   @IsOptional()
+  @IsString()
   productId?: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: 'Caja de tornillos' })
+  @IsString()
   description: string;
 
-  @ApiProperty()
-  @IsNumber()
+  @ApiProperty({ example: 10 })
+  @IsInt()
+  @Min(1)
   qty: number;
 
-  @ApiProperty()
+  @ApiProperty({ example: 25.5 })
   @IsNumber()
+  @Min(0)
   unitPrice: number;
 }
