@@ -17,7 +17,10 @@ export class PosService {
   async handleSaleAction(
     saleId: string,
     dto: PosSaleActionDto,
-  ) {
+  ) {  
+    if (!isUUID(saleId)) {
+    throw new ConflictException('El saleId debe ser un UUID válido');
+    
     // 1️⃣ Confirmar venta siempre
     const sale = await this.salesService.confirm(saleId);
 

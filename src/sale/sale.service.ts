@@ -500,13 +500,6 @@ export class SalesService {
      Obtener ventas
   ========================== */
 
-  // findAll() {
-  //   return this.saleRepo.find({
-  //     relations: ['client'],
-  //     order: { createdAt: 'DESC' }
-  //   });
-  // }
-
   //con items
   findAll() {
   return this.saleRepo.find({
