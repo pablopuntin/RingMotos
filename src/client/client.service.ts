@@ -66,13 +66,6 @@ export class ClientsService {
     return client;
   }
 
-  // async update(id: string, dto: UpdateClientDto): Promise<Client> {
-  //   const client = await this.findOne(id);
-  //   this.ensureNotFinalConsumer(client);
-
-  //   Object.assign(client, dto);
-  //   return this.clientsRepo.save(client);
-  // }
 
   //refactor con cloudinary
   async update(id: string, dto: UpdateClientDto & { imgUrl?: string }): Promise<Client> {
