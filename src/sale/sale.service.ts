@@ -465,36 +465,66 @@ export class SalesService {
      Confirmar venta (SIN pagos)
   ========================== */
 
+  // async confirm(id: string) {
+  //   return this.dataSource.transaction(async manager => {
+  //     const sale = await manager.findOne(Sale, {
+  //       where: { id },
+  //     });
+
+  //     if (!sale) {
+  //       throw new NotFoundException('Venta no encontrada');
+  //     }
+
+  //     if (sale.status !== 'DRAFT') {
+  //       return sale;
+  //     }
+
+  //     const itemsCount = await manager.count(SaleItem, {
+  //       where: { sale: { id } },
+  //     });
+
+  //     if (itemsCount === 0) {
+  //       throw new ConflictException(
+  //         'La venta no tiene ítems',
+  //       );
+  //     }
+
+  //     sale.status = 'CONFIRMED';
+  //     sale.confirmedAt = new Date();
+
+  //     return manager.save(sale);
+  //   });
+  // }
+
   async confirm(id: string) {
-    return this.dataSource.transaction(async manager => {
-      const sale = await manager.findOne(Sale, {
-        where: { id },
-      });
-
-      if (!sale) {
-        throw new NotFoundException('Venta no encontrada');
-      }
-
-      if (sale.status !== 'DRAFT') {
-        return sale;
-      }
-
-      const itemsCount = await manager.count(SaleItem, {
-        where: { sale: { id } },
-      });
-
-      if (itemsCount === 0) {
-        throw new ConflictException(
-          'La venta no tiene ítems',
-        );
-      }
-
-      sale.status = 'CONFIRMED';
-      sale.confirmedAt = new Date();
-
-      return manager.save(sale);
+  return this.dataSource.transaction(async manager => {
+    const sale = await manager.findOne(Sale, {
+      where: { id },
+      relations: ['client'], // <--- agregalo aquí
     });
-  }
+
+    if (!sale) {
+      throw new NotFoundException('Venta no encontrada');
+    }
+
+    if (sale.status !== 'DRAFT') {
+      return sale;
+    }
+
+    const itemsCount = await manager.count(SaleItem, {
+      where: { sale: { id } },
+    });
+
+    if (itemsCount === 0) {
+      throw new ConflictException('La venta no tiene ítems');
+    }
+
+    sale.status = 'CONFIRMED';
+    sale.confirmedAt = new Date();
+
+    return manager.save(sale);
+  });
+}
 
   /* =========================
      Obtener ventas

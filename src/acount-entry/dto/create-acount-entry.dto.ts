@@ -37,17 +37,17 @@ export class CreateAccountEntryDto {
     description: 'Balance después del movimiento',
     example: 1250.0,
   })
-  balanceAfter: number;
+  balanceAfter?: number;
 
   @ApiProperty({
     description: 'Descripción del movimiento',
     example: 'Pago parcial de factura',
   })
-  description: string;
+  description?: string;
 
   @ApiProperty({
     description: 'Estado del movimiento',
     example: 'ACTIVE',
   })
-  status: string;
+  status?: string;
 }

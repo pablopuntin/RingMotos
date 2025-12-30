@@ -1,7 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
-
 import { AccountEntry } from './entities/acount-entry.entity';
 import { Client } from 'src/client/entities/client.entity';
 import { Sale } from 'src/sale/entities/sale.entity';
@@ -231,4 +230,41 @@ export class AccountEntryService {
       recentMovements: movements,
     };
   }
+
+  //servicio que genera un cargo en cuenta
+  async createChargeForSale(sale: Sale) {
+  if (!sale.client || !sale.client.id) {
+  throw new BadRequestException('La venta no tiene cliente asignado');
+}
+
+const client = await this.clientRepo.findOneBy({ id: sale.client.id });
+
+  if (!client) {
+    throw new BadRequestException('Cliente no encontrado');
+  }
+
+  const lastEntry = await this.repo.findOne({
+    where: { client: { id: client.id } },
+    order: { createdAt: 'DESC' },
+  });
+
+  const previousBalance = Number(lastEntry?.balanceAfter ?? 0);
+  const newBalance = previousBalance + Number(sale.totalAmount);
+
+  const entry = this.repo.create({
+    client,
+    sale,
+    type: 'CHARGE',
+    amount: sale.totalAmount,
+    balanceAfter: newBalance,
+    description: 'Cargo por venta confirmada',
+    status: 'ACTIVE',
+  });
+
+  await this.repo.save(entry);
+
+  client.totalDebtCache = newBalance;
+  await this.clientRepo.save(client);
+}
+
 }
