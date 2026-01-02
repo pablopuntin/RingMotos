@@ -1,21 +1,3 @@
-// import { Controller, Post, Body } from '@nestjs/common';
-// import { ApiTags, ApiOperation } from '@nestjs/swagger';
-// import { PaymentService } from './payment.service';
-// import { CreatePaymentDto } from './dto/create-payment.dto';
-
-// @ApiTags('Payments')
-// @Controller('payments')
-// export class PaymentController {
-//   constructor(private readonly service: PaymentService) {}
-
-//   @Post()
-//   @ApiOperation({ summary: 'Registrar pago de cliente' })
-//   create(@Body() dto: CreatePaymentDto) {
-//     return this.service.create(dto);
-//   }
-// }
-
-//ref
 import { Controller, Post, Body } from '@nestjs/common';
 import {
   ApiTags,
@@ -26,6 +8,7 @@ import {
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { Payment } from './entities/payment.entity';
+import { CreateDirectPaymentDto } from './dto/create-direct-payment.dto';
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -93,4 +76,54 @@ export class PaymentController {
   create(@Body() dto: CreatePaymentDto) {
     return this.service.create(dto);
   }
+
+//   @Post('direct')
+// @ApiOperation({ summary: 'Pago directo a cuenta corriente' })
+// createDirect(@Body() dto: CreateDirectPaymentDto) {
+//   return this.service.createDirectPayment(dto);
+// }
+
+//ref
+
+@Post('direct')
+@ApiOperation({
+  summary: 'Pago directo a cuenta corriente',
+  description: `
+Registra un pago directo del cliente sin imputarlo a ventas.
+- Impacta en caja
+- Impacta en cuenta corriente
+- No modifica ventas ni allocations
+`,
+})
+@ApiBody({
+  type: CreateDirectPaymentDto,
+  examples: {
+    ejemplo: {
+      summary: 'Pago directo',
+      value: {
+        clientId: 'ad8b0be7-4ba9-4746-8b27-de4d4f44f3f4',
+        amount: 500,
+        paymentMethod: 'CASH',
+        receivedBy: 'cf28836b-0066-4e08-bbeb-6e2cd337a345',
+        description: 'Entrega a cuenta',
+      },
+    },
+  },
+})
+@ApiResponse({
+  status: 201,
+  description: 'Pago directo registrado correctamente',
+})
+@ApiResponse({
+  status: 400,
+  description: 'Datos inválidos',
+})
+@ApiResponse({
+  status: 404,
+  description: 'Cliente no encontrado',
+})
+createDirect(@Body() dto: CreateDirectPaymentDto) {
+  return this.service.createDirectPayment(dto);
+}
+
 }

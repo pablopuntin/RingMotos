@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-
 import { Payment } from './entities/payment.entity';
 import { Sale } from 'src/sale/entities/sale.entity';
 import { PaymentAllocation } from 'src/payment-allocation/entities/payment-allocation.entity';
@@ -16,6 +15,7 @@ import { CashMovement } from 'src/cash-movement/entities/cash-movement.entity';
 import { AccountEntry } from 'src/acount-entry/entities/acount-entry.entity';
 import { CashRegister } from 'src/cash-register/entities/cash-register.entity';
 import { Client } from 'src/client/entities/client.entity';
+import { CreateDirectPaymentDto } from './dto/create-direct-payment.dto';
 
 @Injectable()
 export class PaymentService {
@@ -182,4 +182,100 @@ export class PaymentService {
       return payment;
     });
   }
+
+  //pago directo a la cuenta corriente
+  async createDirectPayment(dto: CreateDirectPaymentDto) {
+  if (dto.amount <= 0) {
+    throw new BadRequestException('El monto debe ser mayor a 0');
+  }
+
+  return this.dataSource.transaction(async manager => {
+    /* =====================
+       Cliente
+    ====================== */
+    const client = await manager.findOne(Client, {
+      where: { id: dto.clientId },
+    });
+
+    if (!client) {
+      throw new NotFoundException('Cliente no encontrado');
+    }
+
+    /* =====================
+       Caja
+    ====================== */
+    let cash = await manager.findOne(CashRegister, {
+      where: { openedBy: dto.receivedBy, status: 'OPEN' },
+    });
+
+    if (!cash) {
+      cash = await manager.save(
+        manager.create(CashRegister, {
+          name: `Caja automática ${dto.receivedBy}`,
+          openingAmount: 0,
+          status: 'OPEN',
+          openedBy: dto.receivedBy,
+          openedAt: new Date(),
+        }),
+      );
+    }
+
+    /* =====================
+       Pago
+    ====================== */
+    const payment = await manager.save(
+      manager.create(Payment, {
+        amount: dto.amount,
+        paymentMethod: dto.paymentMethod,
+        receivedBy: dto.receivedBy,
+        cashRegisterId: cash.id,
+        paymentDate: new Date(),
+        status: 'COMPLETED',
+      }),
+    );
+
+    /* =====================
+       Caja movimiento
+    ====================== */
+    await manager.save(
+      manager.create(CashMovement, {
+        cashRegister: cash,
+        type: 'IN',
+        amount: dto.amount,
+        reason: 'Pago directo a cuenta corriente',
+        relatedPaymentId: payment.id,
+      }),
+    );
+
+    /* =====================
+       Cuenta corriente
+    ====================== */
+    const lastEntry = await manager.findOne(AccountEntry, {
+      where: { client: { id: client.id } },
+      order: { createdAt: 'DESC' },
+    });
+
+    const previousBalance = Number(lastEntry?.balanceAfter ?? 0);
+    const newBalance = previousBalance - dto.amount;
+
+    await manager.save(
+      manager.create(AccountEntry, {
+        client,
+        payment,
+        type: 'PAYMENT',
+        amount: dto.amount,
+        balanceAfter: newBalance,
+        description:
+          dto.description ?? 'Pago directo a cuenta corriente',
+        status: 'ACTIVE',
+      }),
+    );
+
+    client.totalDebtCache = newBalance;
+    await manager.save(client);
+
+    return payment;
+  });
+}
+
 }
