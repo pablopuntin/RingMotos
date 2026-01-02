@@ -40,51 +40,7 @@ export class AccountEntryService {
      CREAR MOVIMIENTO
   ===================================================== */
 
-  // async create(dto: CreateAccountEntryDto) {
-  //   const client = await this.clientRepo.findOneBy({ id: dto.clientId });
-  //   if (!client) {
-  //     throw new BadRequestException('Cliente no encontrado');
-  //   }
-
-  //   const lastBalance = await this.getLastBalance(client.id);
-
-  //   let sale: Sale | null = null;
-  //   let payment: Payment | null = null;
-
-  //   if (dto.saleId) {
-  //     sale = await this.saleRepo.findOneBy({ id: dto.saleId });
-  //     if (!sale) {
-  //       throw new BadRequestException('Venta no encontrada');
-  //     }
-  //   }
-
-  //   if (dto.paymentId) {
-  //     payment = await this.paymentRepo.findOneBy({ id: dto.paymentId });
-  //     if (!payment) {
-  //       throw new BadRequestException('Pago no encontrado');
-  //     }
-  //   }
-
-  //   const newBalance =
-  //     dto.type === 'PAYMENT'
-  //       ? lastBalance - Number(dto.amount)
-  //       : lastBalance + Number(dto.amount);
-
-  //   const entry = this.repo.create({
-  //     client,
-  //     type: dto.type,
-  //     sale,
-  //     payment,
-  //     amount: dto.amount,
-  //     balanceAfter: newBalance,
-  //     description: dto.description,
-  //     status: dto.status ?? 'ACTIVE',
-  //   } as Partial<AccountEntry>);
-
-  //   return this.repo.save(entry);
-  // }
-
-  //refactor
+  
   async create(dto: CreateAccountEntryDto) {
   const client = await this.clientRepo.findOneBy({ id: dto.clientId });
   if (!client) {
@@ -232,39 +188,106 @@ export class AccountEntryService {
   }
 
   //servicio que genera un cargo en cuenta
-  async createChargeForSale(sale: Sale) {
-  if (!sale.client || !sale.client.id) {
-  throw new BadRequestException('La venta no tiene cliente asignado');
-}
+//   async createChargeForSale(sale: Sale) {
+//   if (!sale.client || !sale.client.id) {
+//   throw new BadRequestException('La venta no tiene cliente asignado');
+// }
 
-const client = await this.clientRepo.findOneBy({ id: sale.client.id });
+// const client = await this.clientRepo.findOneBy({ id: sale.client.id });
+
+//   if (!client) {
+//     throw new BadRequestException('Cliente no encontrado');
+//   }
+
+//   const lastEntry = await this.repo.findOne({
+//     where: { client: { id: client.id } },
+//     order: { createdAt: 'DESC' },
+//   });
+
+//   const previousBalance = Number(lastEntry?.balanceAfter ?? 0);
+//   const newBalance = previousBalance + Number(sale.totalAmount);
+
+//   const entry = this.repo.create({
+//     client,
+//     sale,
+//     type: 'CHARGE',
+//     amount: sale.totalAmount,
+//     balanceAfter: newBalance,
+//     description: 'Cargo por venta confirmada',
+//     status: 'ACTIVE',
+//   });
+
+//   await this.repo.save(entry);
+
+//   client.totalDebtCache = newBalance;
+//   await this.clientRepo.save(client);
+// }
+
+//ref
+async createChargeForSale(sale: Sale) {
+  // 1️⃣ Validaciones básicas
+  if (!sale?.client?.id) {
+    throw new BadRequestException(
+      'La venta no tiene cliente asignado',
+    );
+  }
+
+  // 2️⃣ Evitar cargos duplicados para la misma venta
+  const existingCharge = await this.repo.findOne({
+    where: {
+      sale: { id: sale.id },
+      type: 'CHARGE',
+    },
+    relations: ['sale'],
+  });
+
+  if (existingCharge) {
+    return existingCharge;
+  }
+
+  // 3️⃣ Obtener cliente
+  const client = await this.clientRepo.findOneBy({
+    id: sale.client.id,
+  });
 
   if (!client) {
     throw new BadRequestException('Cliente no encontrado');
   }
 
+  // 4️⃣ Obtener último saldo
   const lastEntry = await this.repo.findOne({
     where: { client: { id: client.id } },
     order: { createdAt: 'DESC' },
   });
 
-  const previousBalance = Number(lastEntry?.balanceAfter ?? 0);
-  const newBalance = previousBalance + Number(sale.totalAmount);
+  const previousBalance = Number(
+    lastEntry?.balanceAfter ?? 0,
+  );
 
+  const saleAmount = Number(sale.totalAmount);
+
+  // 5️⃣ Calcular nuevo saldo
+  const newBalance = previousBalance + saleAmount;
+
+  // 6️⃣ Crear movimiento
   const entry = this.repo.create({
     client,
     sale,
     type: 'CHARGE',
-    amount: sale.totalAmount,
+    amount: saleAmount,
     balanceAfter: newBalance,
     description: 'Cargo por venta confirmada',
     status: 'ACTIVE',
-  });
+  } as Partial<AccountEntry>);
 
+  // 7️⃣ Persistir
   await this.repo.save(entry);
 
+  // 8️⃣ Sincronizar cache (ESPEJO, no cálculo)
   client.totalDebtCache = newBalance;
   await this.clientRepo.save(client);
+
+  return entry;
 }
 
 }

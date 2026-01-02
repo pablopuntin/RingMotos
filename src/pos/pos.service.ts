@@ -124,11 +124,21 @@ export class PosService {
   const saldoVenta =
     Number(fullSale.totalAmount) - entrega;
 
-  const saldoTotal =
-    Number(fullSale.client.totalDebtCache);
+  // const saldoTotal =
+  //   Number(fullSale.client.totalDebtCache);
 
-  const saldoAnterior =
-    saldoTotal - saldoVenta;
+  // const saldoAnterior =
+  //   saldoTotal - saldoVenta;
+
+  //ref
+  const saldoTotal =
+  await this.accountEntryService.getLastBalance(
+    fullSale.client.id,
+  );
+
+const saldoAnterior =
+  saldoTotal - Number(saldoVenta);
+
 
   // 6️⃣ JSON largo (el que pediste)
   return {

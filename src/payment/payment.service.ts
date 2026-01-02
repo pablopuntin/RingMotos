@@ -119,7 +119,10 @@ export class PaymentService {
           }),
         );
 
-        sale.paidAmount += alloc.amount;
+        // sale.paidAmount += alloc.amount;
+        sale.paidAmount =
+  Number(sale.paidAmount) + Number(alloc.amount);
+
         sale.status =
           sale.paidAmount >= sale.totalAmount ? 'PAID' : 'PAID_PARTIAL';
 
