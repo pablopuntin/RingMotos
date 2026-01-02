@@ -106,6 +106,7 @@ import { ApiTags, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/
 import { AccountEntryService } from './acount-entry.service';
 import { CreateAccountEntryDto } from './dto/create-acount-entry.dto';
 import { AccountEntry } from './entities/acount-entry.entity';
+import { AccountHistoryQueryDto } from './dto/account-history-query.dto';
 
 @ApiTags('Account Entries')
 @Controller('account-entries')
@@ -170,4 +171,14 @@ export class AccountEntryController {
   ) {
     return this.service.getSummary(clientId, Number(limit) || 10);
   }
+
+    // controlador para traer el historial de cc
+@Get(':clientId/account-history')
+@ApiOperation({ summary: 'Historial de cuenta corriente' })
+getAccountHistory(
+  @Param('clientId') clientId: string,
+  @Query() query: AccountHistoryQueryDto,
+) {
+  return this.service.getAccountHistory(clientId, query);
+}
 }

@@ -6,6 +6,8 @@ import { Client } from 'src/client/entities/client.entity';
 import { Sale } from 'src/sale/entities/sale.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
 import { CreateAccountEntryDto } from './dto/create-acount-entry.dto';
+import { AccountHistoryQueryDto } from './dto/account-history-query.dto';
+import { AccountEntryType } from './dto/account-history-query.dto';
 
 @Injectable()
 export class AccountEntryService {
@@ -188,106 +190,134 @@ export class AccountEntryService {
   }
 
   //servicio que genera un cargo en cuenta
-//   async createChargeForSale(sale: Sale) {
-//   if (!sale.client || !sale.client.id) {
-//   throw new BadRequestException('La venta no tiene cliente asignado');
-// }
+  async createChargeForSale(sale: Sale) {
+  if (!sale.client || !sale.client.id) {
+  throw new BadRequestException('La venta no tiene cliente asignado');
+}
 
-// const client = await this.clientRepo.findOneBy({ id: sale.client.id });
-
-//   if (!client) {
-//     throw new BadRequestException('Cliente no encontrado');
-//   }
-
-//   const lastEntry = await this.repo.findOne({
-//     where: { client: { id: client.id } },
-//     order: { createdAt: 'DESC' },
-//   });
-
-//   const previousBalance = Number(lastEntry?.balanceAfter ?? 0);
-//   const newBalance = previousBalance + Number(sale.totalAmount);
-
-//   const entry = this.repo.create({
-//     client,
-//     sale,
-//     type: 'CHARGE',
-//     amount: sale.totalAmount,
-//     balanceAfter: newBalance,
-//     description: 'Cargo por venta confirmada',
-//     status: 'ACTIVE',
-//   });
-
-//   await this.repo.save(entry);
-
-//   client.totalDebtCache = newBalance;
-//   await this.clientRepo.save(client);
-// }
-
-//ref
-async createChargeForSale(sale: Sale) {
-  // 1️⃣ Validaciones básicas
-  if (!sale?.client?.id) {
-    throw new BadRequestException(
-      'La venta no tiene cliente asignado',
-    );
-  }
-
-  // 2️⃣ Evitar cargos duplicados para la misma venta
-  const existingCharge = await this.repo.findOne({
-    where: {
-      sale: { id: sale.id },
-      type: 'CHARGE',
-    },
-    relations: ['sale'],
-  });
-
-  if (existingCharge) {
-    return existingCharge;
-  }
-
-  // 3️⃣ Obtener cliente
-  const client = await this.clientRepo.findOneBy({
-    id: sale.client.id,
-  });
+const client = await this.clientRepo.findOneBy({ id: sale.client.id });
 
   if (!client) {
     throw new BadRequestException('Cliente no encontrado');
   }
 
-  // 4️⃣ Obtener último saldo
   const lastEntry = await this.repo.findOne({
     where: { client: { id: client.id } },
     order: { createdAt: 'DESC' },
   });
 
-  const previousBalance = Number(
-    lastEntry?.balanceAfter ?? 0,
-  );
+  const previousBalance = Number(lastEntry?.balanceAfter ?? 0);
+  const newBalance = previousBalance + Number(sale.totalAmount);
 
-  const saleAmount = Number(sale.totalAmount);
-
-  // 5️⃣ Calcular nuevo saldo
-  const newBalance = previousBalance + saleAmount;
-
-  // 6️⃣ Crear movimiento
   const entry = this.repo.create({
     client,
     sale,
     type: 'CHARGE',
-    amount: saleAmount,
+    amount: sale.totalAmount,
     balanceAfter: newBalance,
     description: 'Cargo por venta confirmada',
     status: 'ACTIVE',
-  } as Partial<AccountEntry>);
+  });
 
-  // 7️⃣ Persistir
   await this.repo.save(entry);
 
-  // 8️⃣ Sincronizar cache (ESPEJO, no cálculo)
   client.totalDebtCache = newBalance;
   await this.clientRepo.save(client);
-
-  return entry;
 }
+
+
+ async getAccountHistory(
+  clientId: string,
+  query: AccountHistoryQueryDto,
+) {
+  const {
+    limit = 10,
+    offset = 0,
+    types,
+    includeSale,
+    includeItems,
+  } = query;
+
+  /* =========================
+     Normalización de types
+  ========================= */
+  let normalizedTypes: AccountEntryType[] | undefined;
+
+  if (types) {
+    if (Array.isArray(types)) {
+      normalizedTypes = types;
+    } else {
+      normalizedTypes = [types];
+    }
+  }
+
+  /* =========================
+     Query base
+  ========================= */
+  const qb = this.repo
+    .createQueryBuilder('entry')
+    .where('entry.clientId = :clientId', { clientId })
+    .orderBy('entry.createdAt', 'DESC')
+    .take(limit)
+    .skip(offset)
+    .leftJoinAndSelect('entry.payment', 'payment');
+
+  /* =========================
+     Filtro por tipo
+  ========================= */
+  if (normalizedTypes && normalizedTypes.length > 0) {
+    qb.andWhere('entry.type IN (:...types)', {
+      types: normalizedTypes,
+    });
+  }
+
+  /* =========================
+     Relaciones opcionales
+  ========================= */
+  if (includeSale) {
+    qb.leftJoinAndSelect('entry.sale', 'sale');
+
+    if (includeItems) {
+      qb.leftJoinAndSelect('sale.items', 'items');
+    }
+  }
+
+  /* =========================
+     Ejecutar query
+  ========================= */
+  const entries = await qb.getMany();
+
+  /* =========================
+     DTO de salida
+  ========================= */
+  return entries.map(e => ({
+    type: e.type,
+    amount: e.amount,
+    balanceAfter: e.balanceAfter,
+    createdAt: e.createdAt,
+    sale: includeSale && e.sale
+      ? {
+          id: e.sale.id,
+          totalAmount: e.sale.totalAmount,
+          paidAmount: e.sale.paidAmount,
+          items: includeItems
+            ? e.sale.items?.map(i => ({
+                description: i.description,
+                qty: i.qty,
+                unitPrice: i.unitPrice,
+              }))
+            : undefined,
+        }
+      : undefined,
+    payment: e.payment
+      ? {
+          id: e.payment.id,
+          amount: e.payment.amount,
+          method: e.payment.paymentMethod,
+        }
+      : undefined,
+  }));
+}
+
 
 }

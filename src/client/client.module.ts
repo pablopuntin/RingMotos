@@ -5,9 +5,10 @@ import { Client } from './entities/client.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 import { Sale } from 'src/sale/entities/sale.entity';
+import { AccountEntry } from 'src/acount-entry/entities/acount-entry.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Client, Sale]),
+  imports: [TypeOrmModule.forFeature([Client, Sale, AccountEntry]),
 CloudinaryModule
 ],
 

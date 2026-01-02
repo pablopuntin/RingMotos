@@ -184,7 +184,103 @@ export class PaymentService {
   }
 
   //pago directo a la cuenta corriente
-  async createDirectPayment(dto: CreateDirectPaymentDto) {
+//   async createDirectPayment(dto: CreateDirectPaymentDto) {
+//   if (dto.amount <= 0) {
+//     throw new BadRequestException('El monto debe ser mayor a 0');
+//   }
+
+//   return this.dataSource.transaction(async manager => {
+//     /* =====================
+//        Cliente
+//     ====================== */
+//     const client = await manager.findOne(Client, {
+//       where: { id: dto.clientId },
+//     });
+
+//     if (!client) {
+//       throw new NotFoundException('Cliente no encontrado');
+//     }
+
+//     /* =====================
+//        Caja
+//     ====================== */
+//     let cash = await manager.findOne(CashRegister, {
+//       where: { openedBy: dto.receivedBy, status: 'OPEN' },
+//     });
+
+//     if (!cash) {
+//       cash = await manager.save(
+//         manager.create(CashRegister, {
+//           name: `Caja automática ${dto.receivedBy}`,
+//           openingAmount: 0,
+//           status: 'OPEN',
+//           openedBy: dto.receivedBy,
+//           openedAt: new Date(),
+//         }),
+//       );
+//     }
+
+//     /* =====================
+//        Pago
+//     ====================== */
+//     const payment = await manager.save(
+//       manager.create(Payment, {
+//         amount: dto.amount,
+//         paymentMethod: dto.paymentMethod,
+//         receivedBy: dto.receivedBy,
+//         cashRegisterId: cash.id,
+//         paymentDate: new Date(),
+//         status: 'COMPLETED',
+//       }),
+//     );
+
+//     /* =====================
+//        Caja movimiento
+//     ====================== */
+//     await manager.save(
+//       manager.create(CashMovement, {
+//         cashRegister: cash,
+//         type: 'IN',
+//         amount: dto.amount,
+//         reason: 'Pago directo a cuenta corriente',
+//         relatedPaymentId: payment.id,
+//       }),
+//     );
+
+//     /* =====================
+//        Cuenta corriente
+//     ====================== */
+//     const lastEntry = await manager.findOne(AccountEntry, {
+//       where: { client: { id: client.id } },
+//       order: { createdAt: 'DESC' },
+//     });
+
+//     const previousBalance = Number(lastEntry?.balanceAfter ?? 0);
+//     const newBalance = previousBalance - dto.amount;
+
+//     await manager.save(
+//       manager.create(AccountEntry, {
+//         client,
+//         payment,
+//         type: 'PAYMENT',
+//         amount: dto.amount,
+//         balanceAfter: newBalance,
+//         description:
+//           dto.description ?? 'Pago directo a cuenta corriente',
+//         status: 'ACTIVE',
+//       }),
+//     );
+
+//     client.totalDebtCache = newBalance;
+//     await manager.save(client);
+
+//     return payment;
+//   });
+// }
+
+//ref
+
+async createDirectPayment(dto: CreateDirectPaymentDto) {
   if (dto.amount <= 0) {
     throw new BadRequestException('El monto debe ser mayor a 0');
   }
@@ -258,7 +354,7 @@ export class PaymentService {
     const previousBalance = Number(lastEntry?.balanceAfter ?? 0);
     const newBalance = previousBalance - dto.amount;
 
-    await manager.save(
+    const accountEntry = await manager.save(
       manager.create(AccountEntry, {
         client,
         payment,
@@ -274,7 +370,37 @@ export class PaymentService {
     client.totalDebtCache = newBalance;
     await manager.save(client);
 
-    return payment;
+    /* =====================
+       Últimos movimientos
+    ====================== */
+    const lastMovements = await manager.find(AccountEntry, {
+      where: { client: { id: client.id } },
+      order: { createdAt: 'DESC' },
+      take: 5,
+    });
+
+    /* =====================
+       Response
+    ====================== */
+    return {
+      payment: {
+        id: payment.id,
+        amount: payment.amount,
+        paymentMethod: payment.paymentMethod,
+        paymentDate: payment.paymentDate,
+      },
+      summary: {
+        entrega: dto.amount,
+        saldoAnterior: previousBalance,
+        saldoTotal: newBalance,
+      },
+      lastMovements: lastMovements.map(m => ({
+        type: m.type,
+        amount: m.amount,
+        balanceAfter: m.balanceAfter,
+        createdAt: m.createdAt,
+      })),
+    };
   });
 }
 
