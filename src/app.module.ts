@@ -29,6 +29,7 @@ import { ClientsSeed } from './common/seeds/seedconsumidorFinal';
 import { AccountAdjustmentModule } from './account-adjustment/account-adjustment.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { PosModule } from './pos/pos.module';
+import { ReportsModule } from './report/report.module';
 
 @Module({
   imports: [
@@ -61,7 +62,8 @@ import { PosModule } from './pos/pos.module';
     SupplierAccountEntryModule,
     AccountAdjustmentModule,
     CloudinaryModule,
-    PosModule
+    PosModule,
+    ReportsModule
   ],
   providers: [InitialSeeder, ClientsSeed]
 })
