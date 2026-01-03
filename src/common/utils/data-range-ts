@@ -1,0 +1,33 @@
+//Funcion para enviar por default rango del ultimo año si no se envian fechas en request
+function resolveDateRange(
+  from?: string,
+  to?: string,
+): { from: Date; to: Date } {
+  const now = new Date();
+
+  const defaultFrom = new Date();
+  defaultFrom.setFullYear(now.getFullYear() - 1);
+  defaultFrom.setHours(0, 0, 0, 0);
+
+  const defaultTo = new Date();
+  defaultTo.setHours(23, 59, 59, 999);
+
+  return {
+    from: from ? parseLocalDate(from) : defaultFrom,
+    to: to ? parseLocalDate(to, true) : defaultTo,
+  };
+}
+
+// ### Rango de fechas por defecto
+
+// Si un endpoint de reportes admite rango de fechas (`from`, `to`) y el cliente
+// no envía ninguno de los dos parámetros, el sistema utilizará automáticamente:
+
+// - `from`: fecha actual menos 1 año (00:00:00)
+// - `to`: fecha actual (23:59:59)
+
+// Esto garantiza:
+// - mejor performance
+// - una experiencia consistente
+// - evita consultas excesivamente grandes
+
