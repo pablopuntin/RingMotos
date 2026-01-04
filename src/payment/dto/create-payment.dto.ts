@@ -34,6 +34,7 @@ import {
   IsArray,
   IsNumber,
   IsString,
+  IsUUID,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -61,7 +62,7 @@ export class CreatePaymentDto {
   paymentMethod: string;
 
   @ApiProperty()
-  @IsString()
+  @IsUUID()
   receivedBy: string;
 
   // 🔥 ESTO ES LO QUE FALTABA

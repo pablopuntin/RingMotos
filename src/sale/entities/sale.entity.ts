@@ -4,6 +4,7 @@ import { SaleItem } from 'src/sale-item/entities/sale-item.entity';
 import { PaymentAllocation } from 'src/payment-allocation/entities/payment-allocation.entity';
 import { AccountEntry } from 'src/acount-entry/entities/acount-entry.entity';
 import { Remito } from 'src/remito/entities/remito.entity';
+import { User } from 'src/user/entities/user.entity';
 
 @Entity()
 export class Sale {
@@ -55,5 +56,7 @@ items: SaleItem[];
 @JoinColumn() // 👈 ESTO ES OBLIGATORIO
 remito?: Remito;
 
+@ManyToOne(() => User, { nullable: false })
+soldBy: User;
 
 }
