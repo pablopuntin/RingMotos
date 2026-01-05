@@ -37,7 +37,7 @@ export class User {
     example: 'juan.perez@example.com',
     description: 'Correo electrónico único del usuario',
   })
-  @Column({ unique: true })
+  @Column({ unique: true, select: false })
   email: string;
 
   @ApiProperty({
@@ -45,7 +45,7 @@ export class User {
     description: 'Contraseña del usuario (solo si es autenticación interna)',
     nullable: true
   })
-  @Column({ nullable: true })
+  @Column({ nullable: true, select:false })
   password?: string;
 
    @ApiProperty({

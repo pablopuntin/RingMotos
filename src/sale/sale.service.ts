@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-
+import { User } from 'src/user/entities/user.entity';
 import { Sale } from './entities/sale.entity';
 import { SaleItem } from 'src/sale-item/entities/sale-item.entity';
 import { Client } from 'src/client/entities/client.entity';
@@ -50,25 +50,68 @@ export class SalesService {
   /* =========================
      Crear venta
   ========================== */
+  //refactor con userId
+//   async create(dto: CreateSaleDto, userId: string) {
+//   const client = await this.clientRepo.findOne({
+//     where: { id: dto.clientId },
+//   });
 
-  async create(dto: CreateSaleDto) {
-    const client = await this.clientRepo.findOne({
-      where: { id: dto.clientId },
-    });
+//   if (!client) {
+//     throw new NotFoundException('Cliente no encontrado');
+//   }
 
-    if (!client) {
-      throw new NotFoundException('Cliente no encontrado');
-    }
+//   const user = await this.dataSource
+//     .getRepository(User)
+//     .findOne({ where: { id: userId } });
 
-    const sale = this.saleRepo.create({
-      client,
-      status: 'DRAFT',
-      totalAmount: 0,
-      paidAmount: 0,
-    });
+//   if (!user) {
+//     throw new NotFoundException('Usuario no encontrado');
+//   }
 
-    return this.saleRepo.save(sale);
+//   const sale = this.saleRepo.create({
+//     client,
+//     soldBy: user,      // 🔥 ACÁ ESTÁ LA CLAVE
+//     status: 'DRAFT',
+//     totalAmount: 0,
+//     paidAmount: 0,
+//   });
+
+//   return this.saleRepo.save(sale);
+// }
+
+async create(dto: CreateSaleDto, userId: string) {
+  if (!userId) {
+    throw new NotFoundException('Usuario no autenticado');
   }
+
+  const client = await this.clientRepo.findOne({
+    where: { id: dto.clientId },
+  });
+
+  if (!client) {
+    throw new NotFoundException('Cliente no encontrado');
+  }
+
+  const user = await this.dataSource
+    .getRepository(User)
+    .findOne({ where: { id: userId } });
+
+  if (!user) {
+    throw new NotFoundException('Usuario no encontrado');
+  }
+
+  const sale = this.saleRepo.create({
+    client,
+    soldBy: user,
+    status: 'DRAFT',
+    totalAmount: 0,
+    paidAmount: 0,
+  });
+
+  return this.saleRepo.save(sale);
+}
+
+
 
   /* =========================
      Agregar ítem

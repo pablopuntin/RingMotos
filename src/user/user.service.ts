@@ -223,12 +223,22 @@ export class UserService {
   // --------------------------
   // FIND BY EMAIL
   // --------------------------
+  // async findByEmail(email: string) {
+  //   return this.userRepository.findOne({
+  //     where: { email },
+  //     relations: ['role'],
+  //   });
+  // }
+
   async findByEmail(email: string) {
-    return this.userRepository.findOne({
-      where: { email },
-      relations: ['role'],
-    });
-  }
+  return this.userRepository
+    .createQueryBuilder('user')
+    .addSelect('user.password') // 👈 CLAVE
+    .leftJoinAndSelect('user.role', 'role')
+    .where('user.email = :email', { email })
+    .getOne();
+}
+
 
   // --------------------------
   // FIND ALL

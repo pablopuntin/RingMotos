@@ -31,7 +31,15 @@ async function bootstrap() {
     .setTitle('Ring Motos API')
     .setDescription('API desarrollada con NestJS — autenticación, roles y módulos dinámicos.')
     .setVersion('1.0.0')
-    .addBearerAuth() // 👈 usa el esquema por defecto "bearer"
+    .addBearerAuth(
+  {
+    type: 'http',
+    scheme: 'bearer',
+    bearerFormat: 'JWT'
+  }
+  
+)
+
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

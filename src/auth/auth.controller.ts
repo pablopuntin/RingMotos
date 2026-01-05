@@ -13,9 +13,9 @@ import { AuthGuard } from '@nestjs/passport';
 export class AuthController {
     constructor(private readonly authService: AuthService){} 
 
-    @AuthSwagger()
-    //@UseGuards(AuthGuard('jwt'), RolesGuard)
-    //@Roles('superadmin')
+    
+   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('superadmin')
     @Post('register')
     @ApiOperation({summary: 'registro de usuarios'})
     @ApiBody({type: RegisterDto})

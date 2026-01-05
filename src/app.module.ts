@@ -31,6 +31,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { PosModule } from './pos/pos.module';
 import { ReportsModule } from './report/report.module';
 
+
 @Module({
   imports: [
     ConfigModule.forRoot({
