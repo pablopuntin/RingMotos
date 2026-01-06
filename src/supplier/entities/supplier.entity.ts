@@ -21,19 +21,26 @@ export class Supplier {
   name: string;
 
   @Column()
-  cuit: string;
+  cuit?: string;
 
   @Column()
-  phone: string;
+  phone?: string;
 
   @Column()
-  email: string;
+  email?: string;
 
   @Column()
-  address: string;
+  address?: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  // @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  // totalDebtCache: number;
+
+  @Column({ type: 'numeric', precision: 14, scale: 2, default: 0 })
   totalDebtCache: number;
+
+   // 👉 estado operativo
+  @Column({ default: true })
+  isActive: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -11,6 +11,9 @@ import {
   SupplierAccountEntry,
   SupplierAccountEntryType,
 } from '../supplier-account-entry/entities/supplier-account-entry.entity';
+import { BadRequestException } from '@nestjs/common';
+import { CreateSupplierPaymentDto } from './dto/create-supplier-payment.dto';
+
 
 
 @Injectable()
@@ -24,58 +27,95 @@ export class SupplierPaymentsService {
     @InjectRepository(SupplierAccountEntry) private readonly saeRepo: Repository<SupplierAccountEntry>,
   ) {}
 
-  async create(dto: {
-    supplierId: string;
-    cashRegisterId: string;
-    amount: number;
-    paymentMethod: string;
-    paymentDate: string;
-    description?: string;
-  }) {
-    return this.ds.transaction(async manager => {
-      const supplier = await manager.findOneByOrFail(Supplier, { id: dto.supplierId });
-      const cashRegister = await manager.findOneByOrFail(CashRegister, { id: dto.cashRegisterId });
+  // async create(dto: {
+  //   supplierId: string;
+  //   cashRegisterId: string;
+  //   amount: number;
+  //   paymentMethod: string;
+  //   paymentDate: string;
+  //   description?: string;
+  // }) {
+  //   return this.ds.transaction(async manager => {
+  //     const supplier = await manager.findOneByOrFail(Supplier, { id: dto.supplierId });
+  //     const cashRegister = await manager.findOneByOrFail(CashRegister, { id: dto.cashRegisterId });
 
-      // 1️⃣ Crear pago
-      const payment = manager.create(SupplierPayment, {
-        supplier,
-        cashRegister,
-        amount: dto.amount,
-        paymentMethod: dto.paymentMethod,
-        paymentDate: new Date(dto.paymentDate),
-        status: SupplierPaymentStatus.COMPLETED,
-      });
-      await manager.save(payment);
+  //     // 1️⃣ Crear pago
+  //     const payment = manager.create(SupplierPayment, {
+  //       supplier,
+  //       cashRegister,
+  //       amount: dto.amount,
+  //       paymentMethod: dto.paymentMethod,
+  //       paymentDate: new Date(dto.paymentDate),
+  //       status: SupplierPaymentStatus.COMPLETED,
+  //     });
+  //     await manager.save(payment);
 
-      // 2️⃣ Actualizar deuda del proveedor
-      const newBalance = supplier.totalDebtCache - dto.amount;
-      supplier.totalDebtCache = Math.max(newBalance, 0);
-      await manager.save(supplier);
+  //     // 2️⃣ Actualizar deuda del proveedor
+  //     const newBalance = supplier.totalDebtCache - dto.amount;
+  //     supplier.totalDebtCache = Math.max(newBalance, 0);
+  //     await manager.save(supplier);
 
-      // 3️⃣ Movimiento en cuenta del proveedor
-      const accountEntry = manager.create(SupplierAccountEntry, {
+  //     // 3️⃣ Movimiento en cuenta del proveedor
+  //     const accountEntry = manager.create(SupplierAccountEntry, {
+  //       supplier,
+  //       supplierPayment: payment,
+  //       type: SupplierAccountEntryType.PAYMENT,
+  //       amount: dto.amount,
+  //       balanceAfter: supplier.totalDebtCache,
+  //       description: dto.description ?? `Pago a proveedor ${supplier.name}`,
+  //     });
+  //     await manager.save(accountEntry);
+
+  //     // 4️⃣ Movimiento de caja
+  //     const movement = manager.create(CashMovement, {
+  //       cashRegister,
+  //       type: 'OUT',
+  //       amount: dto.amount,
+  //       reason: `Pago a proveedor ${supplier.name}`,
+  //       relatedSupplierPayment: payment,
+  //     });
+  //     await manager.save(movement);
+
+  //     return payment;
+  //   });
+  // }
+
+  //ref
+  async create(dto: CreateSupplierPaymentDto) {
+  return this.ds.transaction(async manager => {
+    const supplier = await manager.findOneByOrFail(Supplier, { id: dto.supplierId });
+
+    if (supplier.totalDebtCache <= 0) {
+      throw new BadRequestException('El proveedor no tiene deuda');
+    }
+
+    const amount = Math.min(dto.amount, supplier.totalDebtCache);
+
+    supplier.totalDebtCache -= amount;
+    await manager.save(supplier);
+
+    const payment = manager.create(SupplierPayment, {
+      supplier,
+      amount,
+      paymentMethod: dto.paymentMethod,
+      paymentDate: new Date(),
+    });
+    await manager.save(payment);
+
+    await manager.save(
+      manager.create(SupplierAccountEntry, {
         supplier,
         supplierPayment: payment,
         type: SupplierAccountEntryType.PAYMENT,
-        amount: dto.amount,
+        amount,
         balanceAfter: supplier.totalDebtCache,
-        description: dto.description ?? `Pago a proveedor ${supplier.name}`,
-      });
-      await manager.save(accountEntry);
+      }),
+    );
 
-      // 4️⃣ Movimiento de caja
-      const movement = manager.create(CashMovement, {
-        cashRegister,
-        type: 'OUT',
-        amount: dto.amount,
-        reason: `Pago a proveedor ${supplier.name}`,
-        relatedSupplierPayment: payment,
-      });
-      await manager.save(movement);
+    return payment;
+  });
+}
 
-      return payment;
-    });
-  }
 
   async reverse(paymentId: string) {
     return this.ds.transaction(async manager => {

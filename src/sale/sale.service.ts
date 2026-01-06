@@ -51,38 +51,6 @@ export class SalesService {
      Crear venta
   ========================== */
   //refactor con userId
-// async create(dto: CreateSaleDto, userId: string) {
-//   if (!userId) {
-//     throw new NotFoundException('Usuario no autenticado');
-//   }
-
-//   const client = await this.clientRepo.findOne({
-//     where: { id: dto.clientId },
-//   });
-
-//   if (!client) {
-//     throw new NotFoundException('Cliente no encontrado');
-//   }
-
-//   const user = await this.dataSource
-//     .getRepository(User)
-//     .findOne({ where: { id: userId } });
-
-//   if (!user) {
-//     throw new NotFoundException('Usuario no encontrado');
-//   }
-
-//   const sale = this.saleRepo.create({
-//     client,
-//     soldBy: user,
-//     status: 'DRAFT',
-//     totalAmount: 0,
-//     paidAmount: 0,
-//   });
-
-//   return this.saleRepo.save(sale);
-// }
-
 async create(dto: CreateSaleDto, authUser: { id: string; role: string }) {
   if (!authUser?.id) {
     throw new NotFoundException('Usuario no autenticado');
