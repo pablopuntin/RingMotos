@@ -43,8 +43,8 @@ export class PosSaleActionDto {
   @IsString()
   paymentMethod?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  receivedBy?: string;
+  // @ApiPropertyOptional()
+  // @IsOptional()
+  // @IsString()
+  // receivedBy?: string;
 }
