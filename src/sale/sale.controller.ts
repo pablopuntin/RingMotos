@@ -38,12 +38,10 @@ export class SalesController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('superadmin', 'admin')
   @ApiOperation({ summary: 'Crear venta (DRAFT)' })
-  create(
-    @Body() dto: CreateSaleDto,
-    @Req() req: any,
-  ) {
-    return this.salesService.create(dto, req.user.userId);
-  }
+ create(@Body() dto: CreateSaleDto, @Req() req: any) {
+  return this.salesService.create(dto, req.user);
+}
+
 
   @Post(':id/items')
   @ApiOperation({ summary: 'Agregar ítem a una venta' })

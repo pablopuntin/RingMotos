@@ -102,7 +102,7 @@ export class PosController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('superadmin', 'admin')
   @Post('sales/:id/action')
-  @ApiOperation({
+  @ApiOperation({ 
     summary: 'Acción POS sobre una venta',
     description: `
 Permite ejecutar acciones rápidas desde el POS sobre una venta confirmada.
