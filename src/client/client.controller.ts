@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  UseGuards
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,6 +20,7 @@ import {
   ApiParam,
   ApiQuery,
   ApiConsumes,
+  ApiBearerAuth
 } from '@nestjs/swagger';
 import { ClientsService } from './client.service';
 import { CreateClientDto } from './dto/create-client.dto';
@@ -27,13 +29,18 @@ import { Client } from './entities/client.entity';
 import { ImageFileInterceptor } from 'src/common/interceptors/image-file.interceptor';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { AccountHistoryQueryDto } from 'src/acount-entry/dto/account-history-query.dto';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { AuthGuard } from '@nestjs/passport';
+
 
 @ApiTags('Clients')
+@ApiBearerAuth()
 @Controller('clients')
 export class ClientsController {
   constructor(
     private readonly clientsService: ClientsService,
-    private readonly cloudinaryService: CloudinaryService,
+    private readonly cloudinaryService: CloudinaryService
   ) {}
 
   @Get('final-consumer')
@@ -130,6 +137,8 @@ export class ClientsController {
     return this.clientsService.update(id, { ...dto, imgUrl });
   }
 
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('superadmin')
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminar cliente' })
   @ApiParam({ name: 'id', type: 'string', example: 'uuid-cliente' })

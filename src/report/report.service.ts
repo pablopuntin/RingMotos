@@ -186,64 +186,65 @@ export class ReportsService {
     };
   }
 
-//   async getSalesByClient(
-//   clientId: string,
+// async getSalesByClient(
 //   from: Date,
 //   to: Date,
+//   clientId?: string,
 // ) {
 //   const sales = await this.saleRepo.find({
 //     where: {
-//       client: { id: clientId },
 //       createdAt: Between(from, to),
+//       ...(clientId ? { client: { id: clientId } } : {}),
 //     },
 //     relations: ['client'],
 //   });
 
-//   if (sales.length === 0) {
-//     return {
-//       clientId,
-//       clientName: null,
-//       totalSales: 0,
-//       totalAmount: 0,
-//       paidAmount: 0,
-//       pendingAmount: 0,
-//     };
+//   const map = new Map<string, any>();
+
+//   for (const sale of sales) {
+//     const id = sale.client.id;
+
+//     if (!map.has(id)) {
+//       map.set(id, {
+//         clientId: id,
+//         clientName: `${sale.client.name} ${sale.client.lastName ?? ''}`,
+//         totalSales: 0,
+//         totalAmount: 0,
+//         paidAmount: 0,
+//       });
+//     }
+
+//     const row = map.get(id);
+//     row.totalSales++;
+//     row.totalAmount += Number(sale.totalAmount);
+//     row.paidAmount += Number(sale.paidAmount);
 //   }
 
-//   const client = sales[0].client;
-
-//   const totalAmount = roundMoney(
-//     sales.reduce((sum, s) => sum + Number(s.totalAmount), 0),
-//   );
-
-//   const paidAmount = roundMoney(
-//     sales.reduce((sum, s) => sum + Number(s.paidAmount), 0),
-//   );
-
-//   return {
-//     clientId: client.id,
-//     clientName: `${client.name} ${client.lastName ?? ''}`.trim(),
-//     totalSales: sales.length,
-//     totalAmount,
-//     paidAmount,
-//     pendingAmount: roundMoney(totalAmount - paidAmount),
-//   };
+//   return Array.from(map.values()).map(r => ({
+//     ...r,
+//     totalAmount: roundMoney(r.totalAmount),
+//     paidAmount: roundMoney(r.paidAmount),
+//     pendingAmount: roundMoney(r.totalAmount - r.paidAmount),
+//   }));
 // }
 
 
 // async getSalesByUser(from: Date, to: Date) {
 //   const sales = await this.saleRepo.find({
 //     where: { createdAt: Between(from, to) },
+//     relations: ['soldBy'],
 //   });
 
 //   const map = new Map<string, any>();
 
 //   for (const sale of sales) {
-//     const key = sale.receivedBy ?? 'SIN_USUARIO';
+//     const user = sale.soldBy;
+//     const key = user.id;
 
 //     if (!map.has(key)) {
 //       map.set(key, {
-//         user: key,
+//         userId: user.id,
+//         userName: `${user.firstname} ${user.lastname}`,
 //         totalSales: 0,
 //         totalAmount: 0,
 //         paidAmount: 0,
@@ -265,52 +266,16 @@ export class ReportsService {
 // }
 
 //ref
-async getSalesByClient(
+async getSalesByUser(
   from: Date,
   to: Date,
-  clientId?: string,
+  userId?: string,
 ) {
   const sales = await this.saleRepo.find({
     where: {
       createdAt: Between(from, to),
-      ...(clientId ? { client: { id: clientId } } : {}),
+      ...(userId ? { soldBy: { id: userId } } : {}),
     },
-    relations: ['client'],
-  });
-
-  const map = new Map<string, any>();
-
-  for (const sale of sales) {
-    const id = sale.client.id;
-
-    if (!map.has(id)) {
-      map.set(id, {
-        clientId: id,
-        clientName: `${sale.client.name} ${sale.client.lastName ?? ''}`,
-        totalSales: 0,
-        totalAmount: 0,
-        paidAmount: 0,
-      });
-    }
-
-    const row = map.get(id);
-    row.totalSales++;
-    row.totalAmount += Number(sale.totalAmount);
-    row.paidAmount += Number(sale.paidAmount);
-  }
-
-  return Array.from(map.values()).map(r => ({
-    ...r,
-    totalAmount: roundMoney(r.totalAmount),
-    paidAmount: roundMoney(r.paidAmount),
-    pendingAmount: roundMoney(r.totalAmount - r.paidAmount),
-  }));
-}
-
-
-async getSalesByUser(from: Date, to: Date) {
-  const sales = await this.saleRepo.find({
-    where: { createdAt: Between(from, to) },
     relations: ['soldBy'],
   });
 
@@ -343,7 +308,5 @@ async getSalesByUser(from: Date, to: Date) {
     pendingAmount: roundMoney(r.totalAmount - r.paidAmount),
   }));
 }
-
-
 
 }

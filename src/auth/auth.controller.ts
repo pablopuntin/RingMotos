@@ -2,20 +2,22 @@ import { Controller, Body, Post, UseGuards } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthService } from './auth.service';
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthSwagger } from './decorators/auth-swagger.decorator';
 import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Auth')
+@ApiBearerAuth()
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService){} 
 
     
-   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('superadmin')
+ 
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@Roles('superadmin')
     @Post('register')
     @ApiOperation({summary: 'registro de usuarios'})
     @ApiBody({type: RegisterDto})

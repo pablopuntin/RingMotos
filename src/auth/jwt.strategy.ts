@@ -12,12 +12,22 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
+  // async validate(payload: any) {
+  //   console.log('✅ [JwtStrategy] Token válido, payload:', payload);
+  //   return {
+  //     userId: payload.sub,
+  //   name: payload.name,
+  //  roles: payload.role ? [payload.role] : []
+  //   };
+  // }
+
   async validate(payload: any) {
-    console.log('✅ [JwtStrategy] Token válido, payload:', payload);
-    return {
-      userId: payload.sub,
+  console.log('✅ [JwtStrategy] Token válido, payload:', payload);
+  return {
+    id: payload.sub,          // 👈 CLAVE
     name: payload.name,
-   roles: payload.role ? [payload.role] : []
-    };
-  }
+    role: payload.role        // 👈 CLAVE (string)
+  };
+}
+
 }

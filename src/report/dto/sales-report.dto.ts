@@ -15,4 +15,7 @@ export class SalesReportQueryDto {
   @IsOptional()
   @IsDateString()
   to?: string;
+
+  @IsOptional()
+  userId?: string;
 }

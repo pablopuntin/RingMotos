@@ -100,7 +100,7 @@ export class PosController {
 
   @AuthSwagger()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('superadmin', 'admin') // o el rol que corresponda al POS
+  @Roles('superadmin', 'admin')
   @Post('sales/:id/action')
   @ApiOperation({
     summary: 'Acción POS sobre una venta',

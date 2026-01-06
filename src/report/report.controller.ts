@@ -18,6 +18,12 @@ import { ReportsService } from './report.service';
 import { CashReportQueryDto } from './dto/cash-report.dto';
 import { SalesReportQueryDto } from './dto/sales-report.dto';
 import { resolveDateRange } from 'src/common/utils/date-money.utils';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { AuthGuard } from '@nestjs/passport';
+import { AuthSwagger } from 'src/auth/decorators/auth-swagger.decorator';
+import { UseGuards } from '@nestjs/common';
+
 
 @ApiTags('Reports')
 @Controller('reports')
@@ -79,7 +85,7 @@ export class ReportsController {
   @ApiResponse({ status: 200 })
   getSalesGroupedByClient(@Query() query: SalesReportQueryDto) {
     const { from, to } = resolveDateRange(query.from, query.to);
-    return this.reportsService.getSalesByClient(from, to);
+    return this.reportsService.getSalesByUser(from, to);
   }
 
   @Get('sales/by-client/:clientId')
@@ -101,13 +107,16 @@ export class ReportsController {
     @Query() query: SalesReportQueryDto,
   ) {
     const { from, to } = resolveDateRange(query.from, query.to);
-    return this.reportsService.getSalesByClient(from, to, clientId);
+    return this.reportsService.getSalesByUser(from, to, clientId);
   }
 
   /* =========================
      👤 VENTAS POR VENDEDOR
   ========================== */
 
+  @AuthSwagger()
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@Roles('superadmin')
   @Get('sales/by-user')
   @ApiOperation({
     summary: 'Ventas agrupadas por vendedor',
@@ -122,10 +131,14 @@ export class ReportsController {
   @ApiQuery({ name: 'from', required: false, example: '2026-01-01' })
   @ApiQuery({ name: 'to', required: false, example: '2026-01-31' })
   @ApiResponse({ status: 200 })
-  getSalesByUser(@Query() query: SalesReportQueryDto) {
-    const { from, to } = resolveDateRange(query.from, query.to);
-    return this.reportsService.getSalesByUser(from, to);
-  }
+ getSalesByUser(@Query() query: SalesReportQueryDto) {
+  const { from, to } = resolveDateRange(query.from, query.to);
+  return this.reportsService.getSalesByUser(
+    from,
+    to,
+    query.userId,
+  );
+}
 
   /* =========================
      📦 TOP PRODUCTS (FASE 2)

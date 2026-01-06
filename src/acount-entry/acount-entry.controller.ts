@@ -173,6 +173,7 @@ export class AccountEntryController {
   }
 
     // controlador para traer el historial de cc
+    
 @Get(':clientId/account-history')
 @ApiOperation({ summary: 'Historial de cuenta corriente' })
 getAccountHistory(
