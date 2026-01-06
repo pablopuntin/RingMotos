@@ -21,11 +21,15 @@ import { resolveDateRange } from 'src/common/utils/date-money.utils';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { AuthGuard } from '@nestjs/passport';
-import { AuthSwagger } from 'src/auth/decorators/auth-swagger.decorator';
 import { UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 
+//ref todas las rutas protegidas
 @ApiTags('Reports')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@Roles('superadmin')
 @Controller('reports')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
@@ -114,9 +118,9 @@ export class ReportsController {
      👤 VENTAS POR VENDEDOR
   ========================== */
 
-  @AuthSwagger()
-@UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles('superadmin')
+//   @AuthSwagger()
+// @UseGuards(AuthGuard('jwt'), RolesGuard)
+// @Roles('superadmin')
   @Get('sales/by-user')
   @ApiOperation({
     summary: 'Ventas agrupadas por vendedor',

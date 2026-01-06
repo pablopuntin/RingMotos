@@ -106,6 +106,8 @@ export class UserController {
 
   @AuthSwagger()
 @UseGuards(AuthGuard('jwt'))
+@Roles('superadmin')
+  @ApiBearerAuth() // 🔑 Swagger sabe que necesita token
 @ApiOperation({ summary: 'Eliminar un usuario' })
 @Delete(':id')
 remove(
