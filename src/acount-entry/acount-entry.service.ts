@@ -189,16 +189,28 @@ export class AccountEntryService {
     };
   }
 
-  //servicio que genera un cargo en cuenta
-  async createChargeForSale(sale: Sale) {
-  if (!sale.client || !sale.client.id) {
-  throw new BadRequestException('La venta no tiene cliente asignado');
-}
+ 
+async createChargeForSale(sale: Sale) {
+  if (!sale.client?.id) {
+    throw new BadRequestException('La venta no tiene cliente asignado');
+  }
 
-const client = await this.clientRepo.findOneBy({ id: sale.client.id });
-
+  const client = await this.clientRepo.findOneBy({ id: sale.client.id });
   if (!client) {
     throw new BadRequestException('Cliente no encontrado');
+  }
+
+  // 🔒 GUARDIA CLAVE (mínima)
+  const existingCharge = await this.repo.findOne({
+    where: {
+      sale: { id: sale.id },
+      type: 'CHARGE',
+      status: 'ACTIVE',
+    },
+  });
+
+  if (existingCharge) {
+    return existingCharge; // 👈 NO vuelve a sumar
   }
 
   const lastEntry = await this.repo.findOne({
@@ -223,6 +235,8 @@ const client = await this.clientRepo.findOneBy({ id: sale.client.id });
 
   client.totalDebtCache = newBalance;
   await this.clientRepo.save(client);
+
+  return entry;
 }
 
 

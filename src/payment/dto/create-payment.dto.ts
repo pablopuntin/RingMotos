@@ -34,7 +34,6 @@ import {
   IsArray,
   IsNumber,
   IsString,
-  IsUUID,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -61,11 +60,6 @@ export class CreatePaymentDto {
   @IsString()
   paymentMethod: string;
 
-  @ApiProperty()
-  @IsUUID()
-  receivedBy: string;
-
-  // 🔥 ESTO ES LO QUE FALTABA
   @ApiProperty({ type: [PaymentAllocationDto] })
   @IsArray()
   @ValidateNested({ each: true })

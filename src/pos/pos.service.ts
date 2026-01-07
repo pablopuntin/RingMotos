@@ -134,7 +134,7 @@ export class PosService {
 
     // 3️⃣ Pago (si corresponde)
     if (dto.action === 'PAY') {
-      if (!dto.amount || dto.amount <= 0) {
+      if (!dto.amount || dto.amount < 0) {
         throw new ConflictException('Monto inválido');
       }
 
@@ -144,14 +144,27 @@ export class PosService {
         );
       }
 
-      await this.paymentService.create({
-        amount: dto.amount,
-        paymentMethod: dto.paymentMethod,
-        receivedBy: user.id, // ✅ viene del token
-        allocations: [
-          { saleId: sale.id, amount: dto.amount },
-        ],
-      });
+    //   await this.paymentService.create({
+    //     amount: dto.amount,
+    //     paymentMethod: dto.paymentMethod,
+    //     receivedBy: user.id, // ✅ viene del token
+    //     allocations: [
+    //       { saleId: sale.id, amount: dto.amount },
+    //     ],
+    //   });
+    // }
+
+    //ref
+    await this.paymentService.create(
+  {
+    amount: dto.amount,
+    paymentMethod: dto.paymentMethod,
+    allocations: [
+      { saleId: sale.id, amount: dto.amount },
+    ],
+  },
+  user.id, // userId separado como segundo argumento
+);
     }
 
     // 4️⃣ Volver a leer la venta COMPLETA

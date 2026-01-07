@@ -1,32 +1,46 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID, IsString, IsOptional, IsInt, IsNumber } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsUUID, IsOptional, IsString, IsNumber, Min } from 'class-validator';
 
 export class CreatePurchaseItemDto {
-  @ApiProperty({ description: "UUID de la compra asociada" })
-  @IsUUID()
-  purchaseId: string;
-
-  @ApiProperty({ description: "ID del producto (nullable)", example: "prod-456", required: false })
+  @ApiPropertyOptional({
+    description: 'ID de producto (opcional)',
+    example: 'uuid-producto',
+  })
   @IsOptional()
-  @IsString()
+  @IsUUID()
   productId?: string;
 
-  @ApiProperty({ description: "Descripción libre del producto", example: "Bolsa de cemento" })
+  @ApiProperty({
+    description: 'Descripción libre del producto',
+    example: 'Bolsa de cemento',
+  })
   @IsString()
   description: string;
 
-  @ApiProperty({ description: "Cantidad", example: 20 })
-  @IsInt()
+  @ApiProperty({
+    description: 'Cantidad',
+    example: 20,
+    minimum: 0.0001,
+  })
+  @IsNumber()
+  @Min(0.0001)
   qty: number;
 
-  @ApiProperty({ description: "Costo unitario", example: 1200.00 })
+  @ApiProperty({
+    description: 'Costo unitario',
+    example: 1200.0,
+    minimum: 0,
+  })
   @IsNumber()
+  @Min(0)
   unitCost: number;
 
-  @ApiProperty({ description: "Total de la línea", example: 24000.00 })
+  @ApiProperty({
+    description: 'Total de la línea',
+    example: 24000.0,
+    minimum: 0,
+  })
   @IsNumber()
+  @Min(0)
   lineTotal: number;
 }
-
-
-

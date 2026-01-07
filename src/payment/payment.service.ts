@@ -15,6 +15,7 @@
 // import { CashRegister } from 'src/cash-register/entities/cash-register.entity';
 // import { Client } from 'src/client/entities/client.entity';
 // import { CreateDirectPaymentDto } from './dto/create-direct-payment.dto';
+// import { User } from 'src/user/entities/user.entity';
 
 // @Injectable()
 // export class PaymentService {
@@ -31,28 +32,39 @@
 //     private readonly dataSource: DataSource,
 //   ) {}
 
+//   /* =========================
+//      PAGO CON ASIGNACIONES
+//   ========================== */
 //   async create(dto: CreatePaymentDto) {
 //     if (dto.amount <= 0) {
 //       throw new BadRequestException('El monto debe ser mayor a 0');
 //     }
 
 //     return this.dataSource.transaction(async manager => {
-//       /* =====================
-//          Caja (auto)
-//       ====================== */
+//       /* ========= USUARIO ========= */
+//       const user = await manager.findOne(User, {
+//         where: { id: dto.receivedBy },
+//       });
+
+//       if (!user) {
+//         throw new NotFoundException('Usuario no encontrado');
+//       }
+
+//       /* ========= CAJA ========= */
 //       let cash = await manager.findOne(CashRegister, {
-//         where: { openedBy: dto.receivedBy, status: 'OPEN' },
+//         where: { openedBy: user.id, status: 'OPEN' },
 //       });
 
 //       if (!cash) {
-//         cash = manager.create(CashRegister, {
-//           name: `Caja automática ${dto.receivedBy}`,
-//           openingAmount: 0,
-//           status: 'OPEN',
-//           openedBy: dto.receivedBy,
-//           openedAt: new Date(),
-//         });
-//         await manager.save(cash);
+//         cash = await manager.save(
+//           manager.create(CashRegister, {
+//             name: `Caja automática ${user.firstname}`,
+//             openingAmount: 0,
+//             status: 'OPEN',
+//             openedBy: user.id,
+//             openedAt: new Date(),
+//           }),
+//         );
 
 //         await manager.save(
 //           manager.create(CashMovement, {
@@ -64,50 +76,38 @@
 //         );
 //       }
 
-//       /* =====================
-//          Pago
-//       ====================== */
-//       const payment = manager.create(Payment, {
-//         amount: dto.amount,
-//         paymentMethod: dto.paymentMethod,
-//         receivedBy: dto.receivedBy,
-//         cashRegisterId: cash.id,
-//         paymentDate: new Date(),
-//         status: 'COMPLETED',
-//       });
-//       await manager.save(payment);
+//       /* ========= PAGO ========= */
+//       const payment = await manager.save(
+//         manager.create(Payment, {
+//           amount: dto.amount,
+//           paymentMethod: dto.paymentMethod,
+//           receivedBy: user,
+//           cashRegister: cash,
+//           status: 'COMPLETED',
+//         }),
+//       );
 
 //       let remaining = dto.amount;
 //       const touchedSales: Sale[] = [];
 
-//       /* =====================
-//          Allocations
-//       ====================== */
+//       /* ========= ALLOCATIONS ========= */
 //       for (const alloc of dto.allocations) {
-//         if (alloc.amount <= 0) {
-//           throw new ConflictException('Monto inválido');
-//         }
-
 //         const sale = await manager.findOne(Sale, {
 //           where: { id: alloc.saleId },
 //           relations: ['client'],
 //         });
 
 //         if (!sale) throw new NotFoundException('Venta no encontrada');
-//         if (sale.status === 'CANCELLED') {
-//           throw new ConflictException('No se puede pagar una venta cancelada');
-//         }
-//         if (sale.status === 'DRAFT') {
-//           throw new ConflictException('La venta debe estar confirmada');
-//         }
+//         if (sale.status === 'CANCELLED')
+//           throw new ConflictException('Venta cancelada');
+//         if (sale.status === 'DRAFT')
+//           throw new ConflictException('Venta no confirmada');
 
-//         const remainingSaleBalance =
+//         const pending =
 //           Number(sale.totalAmount) - Number(sale.paidAmount);
 
-//         if (alloc.amount > remainingSaleBalance) {
-//           throw new ConflictException(
-//             'El monto supera el saldo pendiente de la venta',
-//           );
+//         if (alloc.amount > pending) {
+//           throw new ConflictException('Monto supera saldo pendiente');
 //         }
 
 //         await manager.save(
@@ -118,10 +118,7 @@
 //           }),
 //         );
 
-//         // sale.paidAmount += alloc.amount;
-//         sale.paidAmount =
-//   Number(sale.paidAmount) + Number(alloc.amount);
-
+//         sale.paidAmount += alloc.amount;
 //         sale.status =
 //           sale.paidAmount >= sale.totalAmount ? 'PAID' : 'PAID_PARTIAL';
 
@@ -132,12 +129,10 @@
 //       }
 
 //       if (remaining !== 0) {
-//         throw new ConflictException('El pago no fue completamente asignado');
+//         throw new ConflictException('Pago no totalmente asignado');
 //       }
 
-//       /* =====================
-//          Movimiento de caja
-//       ====================== */
+//       /* ========= MOVIMIENTO CAJA ========= */
 //       await manager.save(
 //         manager.create(CashMovement, {
 //           cashRegister: cash,
@@ -148,9 +143,7 @@
 //         }),
 //       );
 
-//       /* =====================
-//          Cuenta corriente
-//       ====================== */
+//       /* ========= CUENTA CORRIENTE ========= */
 //       const client = touchedSales[0]?.client;
 //       if (client) {
 //         const lastEntry = await manager.findOne(AccountEntry, {
@@ -158,8 +151,8 @@
 //           order: { createdAt: 'DESC' },
 //         });
 
-//         const previousBalance = Number(lastEntry?.balanceAfter ?? 0);
-//         const newBalance = previousBalance - dto.amount;
+//         const previous = Number(lastEntry?.balanceAfter ?? 0);
+//         const newBalance = previous - dto.amount;
 
 //         await manager.save(
 //           manager.create(AccountEntry, {
@@ -170,8 +163,8 @@
 //             amount: dto.amount,
 //             balanceAfter: newBalance,
 //             description: 'Pago recibido',
-//             status: 'ACTIVE'
-//           })
+//             status: 'ACTIVE',
+//           }),
 //         );
 
 //         client.totalDebtCache = newBalance;
@@ -182,132 +175,90 @@
 //     });
 //   }
 
-//   //pago directo a la cuenta corriente
-// async createDirectPayment(dto: CreateDirectPaymentDto) {
-//   if (dto.amount <= 0) {
-//     throw new BadRequestException('El monto debe ser mayor a 0');
-//   }
-
-//   return this.dataSource.transaction(async manager => {
-//     /* =====================
-//        Cliente
-//     ====================== */
-//     const client = await manager.findOne(Client, {
-//       where: { id: dto.clientId },
-//     });
-
-//     if (!client) {
-//       throw new NotFoundException('Cliente no encontrado');
+//   /* =========================
+//      PAGO DIRECTO (SIN VENTA)
+//   ========================== */
+//   async createDirectPayment(dto: CreateDirectPaymentDto) {
+//     if (dto.amount <= 0) {
+//       throw new BadRequestException('El monto debe ser mayor a 0');
 //     }
 
-//     /* =====================
-//        Caja
-//     ====================== */
-//     let cash = await manager.findOne(CashRegister, {
-//       where: { openedBy: dto.receivedBy, status: 'OPEN' },
-//     });
+//     return this.dataSource.transaction(async manager => {
+//       const client = await manager.findOne(Client, {
+//         where: { id: dto.clientId },
+//       });
+//       if (!client) throw new NotFoundException('Cliente no encontrado');
 
-//     if (!cash) {
-//       cash = await manager.save(
-//         manager.create(CashRegister, {
-//           name: `Caja automática ${dto.receivedBy}`,
-//           openingAmount: 0,
-//           status: 'OPEN',
-//           openedBy: dto.receivedBy,
-//           openedAt: new Date(),
+//       const user = await manager.findOne(User, {
+//         where: { id: dto.receivedBy },
+//       });
+//       if (!user) throw new NotFoundException('Usuario no encontrado');
+
+//       let cash = await manager.findOne(CashRegister, {
+//         where: { openedBy: user.id, status: 'OPEN' },
+//       });
+
+//       if (!cash) {
+//         cash = await manager.save(
+//           manager.create(CashRegister, {
+//             name: `Caja automática ${user.firstname}`,
+//             openingAmount: 0,
+//             status: 'OPEN',
+//             openedBy: user.id,
+//             openedAt: new Date(),
+//           }),
+//         );
+//       }
+
+//       const payment = await manager.save(
+//         manager.create(Payment, {
+//           amount: dto.amount,
+//           paymentMethod: dto.paymentMethod,
+//           receivedBy: user,
+//           cashRegister: cash,
+//           status: 'COMPLETED',
 //         }),
 //       );
-//     }
 
-//     /* =====================
-//        Pago
-//     ====================== */
-//     const payment = await manager.save(
-//       manager.create(Payment, {
-//         amount: dto.amount,
-//         paymentMethod: dto.paymentMethod,
-//         receivedBy: dto.receivedBy,
-//         cashRegisterId: cash.id,
-//         paymentDate: new Date(),
-//         status: 'COMPLETED',
-//       }),
-//     );
+//       await manager.save(
+//         manager.create(CashMovement, {
+//           cashRegister: cash,
+//           type: 'IN',
+//           amount: dto.amount,
+//           reason: 'Pago directo a cuenta corriente',
+//           relatedPaymentId: payment.id,
+//         }),
+//       );
 
-//     /* =====================
-//        Caja movimiento
-//     ====================== */
-//     await manager.save(
-//       manager.create(CashMovement, {
-//         cashRegister: cash,
-//         type: 'IN',
-//         amount: dto.amount,
-//         reason: 'Pago directo a cuenta corriente',
-//         relatedPaymentId: payment.id,
-//       }),
-//     );
+//       const lastEntry = await manager.findOne(AccountEntry, {
+//         where: { client: { id: client.id } },
+//         order: { createdAt: 'DESC' },
+//       });
 
-//     /* =====================
-//        Cuenta corriente
-//     ====================== */
-//     const lastEntry = await manager.findOne(AccountEntry, {
-//       where: { client: { id: client.id } },
-//       order: { createdAt: 'DESC' },
+//       const previous = Number(lastEntry?.balanceAfter ?? 0);
+//       const newBalance = previous - dto.amount;
+
+//       await manager.save(
+//         manager.create(AccountEntry, {
+//           client,
+//           payment,
+//           type: 'PAYMENT',
+//           amount: dto.amount,
+//           balanceAfter: newBalance,
+//           description:
+//             dto.description ?? 'Pago directo a cuenta corriente',
+//           status: 'ACTIVE',
+//         }),
+//       );
+
+//       client.totalDebtCache = newBalance;
+//       await manager.save(client);
+
+//       return payment;
 //     });
-
-//     const previousBalance = Number(lastEntry?.balanceAfter ?? 0);
-//     const newBalance = previousBalance - dto.amount;
-
-//     const accountEntry = await manager.save(
-//       manager.create(AccountEntry, {
-//         client,
-//         payment,
-//         type: 'PAYMENT',
-//         amount: dto.amount,
-//         balanceAfter: newBalance,
-//         description:
-//           dto.description ?? 'Pago directo a cuenta corriente',
-//         status: 'ACTIVE',
-//       }),
-//     );
-
-//     client.totalDebtCache = newBalance;
-//     await manager.save(client);
-
-//     /* =====================
-//        Últimos movimientos
-//     ====================== */
-//     const lastMovements = await manager.find(AccountEntry, {
-//       where: { client: { id: client.id } },
-//       order: { createdAt: 'DESC' },
-//       take: 5,
-//     });
-
-//     /* =====================
-//        Response
-//     ====================== */
-//     return {
-//       payment: {
-//         id: payment.id,
-//         amount: payment.amount,
-//         paymentMethod: payment.paymentMethod,
-//         paymentDate: payment.paymentDate,
-//       },
-//       summary: {
-//         entrega: dto.amount,
-//         saldoAnterior: previousBalance,
-//         saldoTotal: newBalance,
-//       },
-//       lastMovements: lastMovements.map(m => ({
-//         type: m.type,
-//         amount: m.amount,
-//         balanceAfter: m.balanceAfter,
-//         createdAt: m.createdAt,
-//       })),
-//     };
-//   });
+//   }
 // }
 
-// }
 
 //ref
 import {
@@ -347,7 +298,7 @@ export class PaymentService {
   /* =========================
      PAGO CON ASIGNACIONES
   ========================== */
-  async create(dto: CreatePaymentDto) {
+  async create(dto: CreatePaymentDto, userId: string) {
     if (dto.amount <= 0) {
       throw new BadRequestException('El monto debe ser mayor a 0');
     }
@@ -355,7 +306,7 @@ export class PaymentService {
     return this.dataSource.transaction(async manager => {
       /* ========= USUARIO ========= */
       const user = await manager.findOne(User, {
-        where: { id: dto.receivedBy },
+        where: { id: userId },
       });
 
       if (!user) {
@@ -490,7 +441,7 @@ export class PaymentService {
   /* =========================
      PAGO DIRECTO (SIN VENTA)
   ========================== */
-  async createDirectPayment(dto: CreateDirectPaymentDto) {
+  async createDirectPayment(dto: CreateDirectPaymentDto, userId: string) {
     if (dto.amount <= 0) {
       throw new BadRequestException('El monto debe ser mayor a 0');
     }
@@ -502,7 +453,7 @@ export class PaymentService {
       if (!client) throw new NotFoundException('Cliente no encontrado');
 
       const user = await manager.findOne(User, {
-        where: { id: dto.receivedBy },
+        where: { id: userId },
       });
       if (!user) throw new NotFoundException('Usuario no encontrado');
 
