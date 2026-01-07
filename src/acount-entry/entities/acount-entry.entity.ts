@@ -1,7 +1,8 @@
-import { Column, PrimaryGeneratedColumn, Entity, ManyToOne, CreateDateColumn } from 'typeorm';
+import { Column, PrimaryGeneratedColumn, Entity, ManyToOne, CreateDateColumn, JoinColumn } from 'typeorm';
 import { Client } from 'src/client/entities/client.entity';
 import { Sale } from 'src/sale/entities/sale.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
+import { User } from 'src/user/entities/user.entity';
 
 @Entity()
 export class AccountEntry {
@@ -19,6 +20,15 @@ export class AccountEntry {
 
   @ManyToOne(() => Payment, (payment) => payment.accountEntries, { nullable: true })
   payment: Payment;
+
+  //   @ManyToOne(() => User)
+  // @JoinColumn({ name: 'created_by' })
+  // createdBy: User;
+
+  @ManyToOne(() => User, { nullable: true })
+createdBy: User;
+
+
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   amount: number;

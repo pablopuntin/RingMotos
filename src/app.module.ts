@@ -30,6 +30,7 @@ import { AccountAdjustmentModule } from './account-adjustment/account-adjustment
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { PosModule } from './pos/pos.module';
 import { ReportsModule } from './report/report.module';
+import { AccountStatementModule } from './account-statement/account-statement.module';
 
 
 @Module({
@@ -64,7 +65,8 @@ import { ReportsModule } from './report/report.module';
     AccountAdjustmentModule,
     CloudinaryModule,
     PosModule,
-    ReportsModule
+    ReportsModule,
+    AccountStatementModule
   ],
   providers: [InitialSeeder, ClientsSeed]
 })
