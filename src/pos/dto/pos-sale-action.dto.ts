@@ -1,23 +1,3 @@
-// import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-// export class PosSaleActionDto {
-//   @ApiProperty({
-//     enum: ['NO_PAYMENT', 'PAY'],
-//     description: 'Tipo de acción POS',
-//   })
-//   action: 'NO_PAYMENT' | 'PAY';
-
-//   @ApiPropertyOptional()
-//   amount?: number;
-
-//   @ApiPropertyOptional()
-//   paymentMethod?: string;
-
-//   @ApiPropertyOptional()
-//   receivedBy?: string;
-// }
-
-//ref
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEnum,

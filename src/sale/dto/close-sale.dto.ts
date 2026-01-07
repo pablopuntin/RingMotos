@@ -10,7 +10,4 @@ export class CloseSaleDto {
   @IsOptional()
   paymentMethod?: string;
 
-  @ApiPropertyOptional({ example: 'uuid-user' })
-  @IsOptional()
-  receivedBy?: string;
-}
+ }

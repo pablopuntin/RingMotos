@@ -52,6 +52,9 @@ export class SalesService {
   ========================== */
   //refactor con userId
 async create(dto: CreateSaleDto, authUser: { id: string; role: string }) {
+   console.log('CreateSaleDto:', dto);
+  console.log('AuthUser:', authUser);
+  
   if (!authUser?.id) {
     throw new NotFoundException('Usuario no autenticado');
   }
