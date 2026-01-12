@@ -241,9 +241,9 @@ export class PaymentController {
           amount: 500,
           paymentMethod: 'CASH',
           description: 'Entrega a cuenta',
-        },
-      },
-    },
+        }
+      }
+    }
   })
   @ApiResponse({
     status: 201,
