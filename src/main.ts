@@ -8,15 +8,22 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
   
+  // app.enableCors({
+  //   origin: [
+  //       'https://ring-motos.vercel.app', 
+  //     //'https://front-git-main-hr-systems-projects.vercel.app', // ← agregá este
+  //     'http://localhost:3000'
+  //   ],
+  //   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  //   credentials: true
+  // });
+
   app.enableCors({
-    origin: [
-      'https://front-one-umber.vercel.app',
-      'https://front-git-main-hr-systems-projects.vercel.app', // ← agregá este
-      'http://localhost:3000'
-    ],
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true
-  });
+  origin: process.env.FRONTEND_URL || 'https://ring-motos.vercel.app',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true
+});
+
 
    //Activar validación global
   app.useGlobalPipes(
