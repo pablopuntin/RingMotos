@@ -43,7 +43,11 @@ export const getTypeOrmConfig = (
     synchronize: true, // ⚠️ en prod real se pone false
      dropSchema: false,
     ssl: {
-      rejectUnauthorized: true
-    }
+      rejectUnauthorized: false,
+    },
+    // Opcional: limitar pool para evitar problemas
+    extra: {
+      max: 5,
+    },
   };
 };
