@@ -1,4 +1,4 @@
-import { Controller, Body, Post, UseGuards } from '@nestjs/common';
+import { Controller, Body, Post, UseGuards, Get } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthService } from './auth.service';
@@ -8,6 +8,7 @@ import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { Res } from '@nestjs/common';
+import { Req } from '@nestjs/common';
 
 @ApiTags('Auth')
 @ApiBearerAuth()
@@ -47,6 +48,19 @@ async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: any) {
   });
 
   return result; // mantenés tu respuesta igual
+}
+
+// en AuthController
+@UseGuards(AuthGuard('jwt'))
+@Get('me')
+getMe(@Req() req) {
+  return {
+    user: {
+      id: req.user.id,
+      name: req.user.name,
+      role: req.user.role,
+    }
+  };
 }
 
 
