@@ -48,13 +48,26 @@ export class AuthService {
       role: user.role?.name  // 👈 AHORA ES ASÍ
     };
 
-    return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: user.id,
-        name: user.firstname,
-        role: user.role?.name  // 👈 LO MISMO AQUÍ
-      }
-    };
+  //   return {
+  //     access_token: this.jwtService.sign(payload),
+  //     user: {
+  //       id: user.id,
+  //       name: user.firstname,
+  //       role: user.role?.name  // 👈 LO MISMO AQUÍ
+  //     }
+  //   };
+  // }
+
+  const token = this.jwtService.sign(payload);
+
+return {
+  access_token: token,
+  user: {
+    id: user.id,
+    name: user.firstname,
+    role: user.role?.name
   }
+};
+
+}
 }

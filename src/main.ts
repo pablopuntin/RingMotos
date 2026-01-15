@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
 
@@ -17,6 +18,8 @@ async function bootstrap() {
   //   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   //   credentials: true
   // });
+
+  app.use(cookieParser()); // ← CLAVE
 
   app.enableCors({
   origin: process.env.FRONTEND_URL || 'https://ring-motos.vercel.app',

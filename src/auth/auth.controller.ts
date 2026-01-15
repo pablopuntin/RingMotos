@@ -7,6 +7,7 @@ import { AuthSwagger } from './decorators/auth-swagger.decorator';
 import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
 import { AuthGuard } from '@nestjs/passport';
+import { Res } from '@nestjs/common';
 
 @ApiTags('Auth')
 @ApiBearerAuth()
@@ -26,9 +27,27 @@ export class AuthController {
 }
 
 
+// @Post('login')
+// async login(@Body() loginDto: LoginDto) {
+//   return this.authService.login(loginDto);
+// }
+
+//ref con seteo de cookie
 @Post('login')
-async login(@Body() loginDto: LoginDto) {
-  return this.authService.login(loginDto);
+async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: any) {
+  const result = await this.authService.login(loginDto);
+
+  // 👉 Seteamos la cookie HTTP-ONLY
+  res.cookie('token', result.access_token, {
+    httpOnly: true,
+    secure: true,          // obligatorio en Vercel
+    sameSite: 'none',      // obligatorio para cross-site (Render → Vercel)
+    path: '/',
+    maxAge: 24 * 60 * 60 * 1000, // 1 día
+  });
+
+  return result; // mantenés tu respuesta igual
 }
+
 
 }
