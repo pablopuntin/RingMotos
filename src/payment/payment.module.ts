@@ -7,6 +7,7 @@ import { AccountEntry } from '../acount-entry/entities/acount-entry.entity';
 import { Sale } from '../sale/entities/sale.entity';
 import { PaymentService } from './payment.service';
 import { PaymentController } from './payment.controller'; // 👈 IMPORTAR
+import { RemitoModule } from 'src/remito/remito.module';
 
 @Module({
   imports: [
@@ -16,7 +17,8 @@ import { PaymentController } from './payment.controller'; // 👈 IMPORTAR
       CashMovement,
       AccountEntry,
       Sale
-    ])
+    ]),
+    RemitoModule,
   ],
   controllers: [PaymentController], // 👈 AGREGAR
   providers: [PaymentService],

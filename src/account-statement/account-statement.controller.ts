@@ -1,18 +1,8 @@
-// src/account-statement/account-statement.controller.ts
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
+import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AccountStatementService } from './account-statement.service';
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-
 
 @ApiTags('Account Statement')
-@ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles('admin', 'superadmin')
 @Controller('account-statement')
 export class AccountStatementController {
   constructor(
@@ -20,13 +10,33 @@ export class AccountStatementController {
   ) {}
 
   @Get(':clientId')
-   async getStatement(
+  @ApiOperation({
+    summary: 'Obtener detalle del estado de cuenta del cliente',
+  })
+  @ApiParam({
+    name: 'clientId',
+    description: 'ID del cliente',
+  })
+  @ApiQuery({
+    name: 'desde',
+    required: false,
+    description: 'Fecha desde (YYYY-MM-DD)',
+  })
+  @ApiQuery({
+    name: 'hasta',
+    required: false,
+    description: 'Fecha hasta (YYYY-MM-DD)',
+  })
+  async getStatement(
     @Param('clientId') clientId: string,
-    @CurrentUser() user: { id: string; role: string },
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
   ) {
     return this.accountStatementService.getStatement(
       clientId,
-      user.id,
+      'userId',
+      desde,
+      hasta,
     );
   }
 }

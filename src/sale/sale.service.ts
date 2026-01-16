@@ -31,21 +31,35 @@ export class SalesService {
      Reglas
   ========================== */
 
+  // private assertEditable(sale: Sale) {
+  //   if (sale.status === 'DRAFT') return;
+
+  //   if (
+  //     sale.status === 'CONFIRMED' &&
+  //     sale.paidAmount === 0 &&
+  //     !sale.remito
+  //   ) {
+  //     return;
+  //   }
+
+  //   throw new ConflictException(
+  //     'La venta no puede modificarse en su estado actual',
+  //   );
+  // }
+
   private assertEditable(sale: Sale) {
-    if (sale.status === 'DRAFT') return;
+  if (sale.status === 'DRAFT') return;
 
-    if (
-      sale.status === 'CONFIRMED' &&
-      sale.paidAmount === 0 &&
-      !sale.remito
-    ) {
-      return;
-    }
-
-    throw new ConflictException(
-      'La venta no puede modificarse en su estado actual',
-    );
+  // Solo editable si está confirmada y SIN pagos
+  if (sale.status === 'CONFIRMED' && sale.paidAmount === 0) {
+    return;
   }
+
+  throw new ConflictException(
+    'La venta no puede modificarse en su estado actual',
+  );
+}
+
 
   /* =========================
      Crear venta
@@ -95,7 +109,7 @@ async create(dto: CreateSaleDto, authUser: { id: string; role: string }) {
     return this.dataSource.transaction(async manager => {
       const sale = await manager.findOne(Sale, {
         where: { id: saleId },
-        relations: ['remito'],
+       // relations: ['remito'],
       });
 
       if (!sale) {
@@ -138,7 +152,7 @@ async create(dto: CreateSaleDto, authUser: { id: string; role: string }) {
     return this.dataSource.transaction(async manager => {
       const item = await manager.findOne(SaleItem, {
         where: { id: itemId },
-        relations: ['sale', 'sale.remito'],
+        relations: ['sale'],
       });
 
       if (!item) {
@@ -209,8 +223,7 @@ async create(dto: CreateSaleDto, authUser: { id: string; role: string }) {
     relations: [
       'client',
       'items',
-      'paymentAllocations',
-      'remito'
+      'paymentAllocations'
     ],
     order: { createdAt: 'DESC' }
   });
@@ -224,7 +237,6 @@ async create(dto: CreateSaleDto, authUser: { id: string; role: string }) {
         'client',
         'items',
         'paymentAllocations',
-        'remito'
       ]
     });
   }

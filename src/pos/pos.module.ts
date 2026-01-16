@@ -7,12 +7,14 @@ import { AccountEntryService } from 'src/acount-entry/acount-entry.service';
 import { SalesService } from 'src/sale/sale.service';
 import { PaymentService } from 'src/payment/payment.service';
 import { AccountEntryModule } from 'src/acount-entry/acount-entry.module';
+import { RemitoModule } from 'src/remito/remito.module';
 
 @Module({
   imports: [
     SaleModule,
     PaymentModule,
-    AccountEntryModule
+    AccountEntryModule,
+    RemitoModule
   ],
   controllers: [PosController],
   providers: [PosService]

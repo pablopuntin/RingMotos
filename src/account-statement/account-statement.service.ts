@@ -17,83 +17,139 @@ export class AccountStatementService {
     private readonly clientRepo: Repository<Client>,
   ) {}
 
-  async getStatement(clientId: string, userId: string) {
-    const client = await this.clientRepo.findOne({
-      where: { id: clientId },
-    });
+// async getStatement(clientId: string, userId: string) {
+//   const client = await this.clientRepo.findOne({
+//     where: { id: clientId },
+//   });
 
-    if (!client) {
-      throw new NotFoundException('Cliente no encontrado');
-    }
+//   if (!client) {
+//     throw new NotFoundException('Cliente no encontrado');
+//   }
 
-    const entries = await this.accountEntryRepo.find({
-      where: { client: { id: clientId } },
-      relations: [
-        'sale',
-        'sale.items',
-        'sale.paymentAllocations',
-        'payment',
-      ],
-      order: { createdAt: 'DESC' },
-    });
+//   // ==============================
+//   // 1️⃣ TRAEMOS REMITOS DEL CLIENTE
+//   // ==============================
+//   const remitos = await this.accountEntryRepo.manager
+//     .getRepository('Remito')
+//     .find({
+//       where: { client: { id: clientId } },
+//       order: { createdAt: 'DESC' },
+//       relations: ['client'],
+//     });
 
-    const movements = entries.map((entry) => {
-      const amount = Number(entry.amount);
-      const balanceAfter = Number(entry.balanceAfter);
+//   // ==============================
+//   // 2️⃣ TRAEMOS ÚLTIMO SALDO REAL
+//   // ==============================
+//   const lastEntry = await this.accountEntryRepo.findOne({
+//     where: { client: { id: clientId } },
+//     order: { createdAt: 'DESC' },
+//   });
 
-      return {
-        id: entry.id,
-        type: entry.type,
-        date: entry.createdAt,
-        description: entry.description,
+//   const finalBalance = lastEntry
+//     ? MoneyUtils.round(Number(lastEntry.balanceAfter))
+//     : MoneyUtils.round(0);
 
-        debit:
-          entry.type === 'CHARGE' || entry.type === 'ADJUSTMENT'
-            ? MoneyUtils.round(amount)
-            : MoneyUtils.round(0),
+//   // ==============================
+//   // 3️⃣ TRANSFORMAMOS REMITOS PARA EL FRONT
+//   // ==============================
+//   const movements = remitos.map(r => ({
+//     id: r.id,
+//     type: r.type, // "SALE_FINALIZED" o "DIRECT_PAYMENT"
+//     date: r.createdAt,
+//     snapshot: r.snapshot, // 👈 ACÁ VA TODO EL REMITO LISTO PARA IMPRIMIR
+//   }));
 
-        credit:
-          entry.type === 'PAYMENT'
-            ? MoneyUtils.round(amount)
-            : MoneyUtils.round(0),
+//   // ==============================
+//   // 4️⃣ RESPUESTA FINAL
+//   // ==============================
+//   return {
+//     client: {
+//       id: client.id,
+//       name: `${client.name} ${client.lastName ?? ''}`,
+//       totalDebtCache: MoneyUtils.round(Number(client.totalDebtCache)),
+//     },
+//     movements, // 👈 REMITO DEBAJO DE REMITO
+//     finalBalance,
+//   };
+// }
 
-        balanceAfter: MoneyUtils.round(balanceAfter),
+//ref
+async getStatement(
+  clientId: string,
+  userId: string,
+  desde?: string,
+  hasta?: string,
+) {
+  const client = await this.clientRepo.findOne({
+    where: { id: clientId },
+  });
 
-        sale: entry.sale
-          ? {
-              id: entry.sale.id,
-              totalAmount: MoneyUtils.round(entry.sale.totalAmount),
-              paidAmount: MoneyUtils.round(entry.sale.paidAmount),
-              items: entry.sale.items?.map((item) => ({
-                description: item.description,
-                qty: item.qty,
-                unitPrice: MoneyUtils.round(item.unitPrice),
-                lineTotal: MoneyUtils.round(item.lineTotal),
-              })),
-            }
-          : null,
-
-        payment: entry.payment
-          ? {
-              id: entry.payment.id,
-              amount: MoneyUtils.round(entry.payment.amount),
-              paymentMethod: entry.payment.paymentMethod,
-              date: entry.payment.paymentDate,
-            }
-          : null,
-      };
-    });
-
-    return {
-      client: {
-        id: client.id,
-        name: client.name,
-      },
-      movements,
-      finalBalance:
-        movements.length > 0
-          ? movements[0].balanceAfter
-          : MoneyUtils.round(0),
-    };
+  if (!client) {
+    throw new NotFoundException('Cliente no encontrado');
   }
+
+  // ==============================
+  // 1️⃣ BASE QUERY DE REMITOS
+  // ==============================
+  const remitoRepo = this.accountEntryRepo.manager.getRepository('Remito');
+
+  const qb = remitoRepo.createQueryBuilder('r')
+    .leftJoinAndSelect('r.client', 'client')
+    .where('client.id = :clientId', { clientId })
+    .orderBy('r.createdAt', 'DESC');
+
+  // ==============================
+  // 2️⃣ FILTRO POR FECHAS (OPCIONAL)
+  // ==============================
+  if (desde) {
+    qb.andWhere('r.createdAt >= :desde', { desde: new Date(desde) });
+  }
+
+  if (hasta) {
+    qb.andWhere('r.createdAt <= :hasta', { hasta: new Date(hasta) });
+  }
+
+  // ==============================
+  // 3️⃣ LÍMITE POR DEFECTO: 10
+  // ==============================
+  if (!desde && !hasta) {
+    qb.take(10);
+  }
+
+  const remitos = await qb.getMany();
+
+  // ==============================
+  // 4️⃣ ÚLTIMO SALDO REAL
+  // ==============================
+  const lastEntry = await this.accountEntryRepo.findOne({
+    where: { client: { id: clientId } },
+    order: { createdAt: 'DESC' },
+  });
+
+  const finalBalance = lastEntry
+    ? MoneyUtils.round(Number(lastEntry.balanceAfter))
+    : MoneyUtils.round(0);
+
+  // ==============================
+  // 5️⃣ FORMATO FINAL PARA EL FRONT
+  // ==============================
+  const movements = remitos.map(r => ({
+    id: r.id,
+    type: r.type, // "SALE_FINALIZED" o "DIRECT_PAYMENT"
+    date: r.createdAt,
+    snapshot: r.snapshot,
+  }));
+
+  return {
+    client: {
+      id: client.id,
+      name: `${client.name} ${client.lastName ?? ''}`,
+      totalDebtCache: MoneyUtils.round(Number(client.totalDebtCache)),
+    },
+    movements,
+    finalBalance,
+  };
+}
+
+
 }

@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
-import { RemitosService } from './remito.service';
-import { RemitosController } from './remito.controller';
-import { Remito } from './entities/remito.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Sale } from 'src/sale/entities/sale.entity';
+import { Remito } from './entities/remito.entity';
+import { RemitoService } from './remito.service';
+import { RemitoController } from './remito.controller';
+import { Client } from 'src/client/entities/client.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Remito, Sale])],
-  controllers: [RemitosController],
-  providers: [RemitosService],
-  exports: [RemitosService]
+  imports: [TypeOrmModule.forFeature([Remito, Client])],
+  controllers: [RemitoController],
+  providers: [RemitoService],
+  exports: [RemitoService],
 })
 export class RemitoModule {}

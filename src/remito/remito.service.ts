@@ -1,33 +1,58 @@
-// remitos/remitos.service.ts
-import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Remito } from './entities/remito.entity';
-import { Sale } from 'src/sale/entities/sale.entity';
+import { CreateRemitoDto } from './dto/create-remito.dto';
+import { Client } from 'src/client/entities/client.entity';
 
 @Injectable()
-export class RemitosService {
+export class RemitoService {
   constructor(
-    @InjectRepository(Remito) private readonly remitoRepo: Repository<Remito>,
-    @InjectRepository(Sale) private readonly saleRepo: Repository<Sale>,
+    @InjectRepository(Remito)
+    private readonly remitoRepo: Repository<Remito>,
+
+    @InjectRepository(Client)
+    private readonly clientRepo: Repository<Client>,
   ) {}
 
-  async createForSale(saleId: string, remitoNumber?: string, format = 'A4') {
-    const sale = await this.saleRepo.findOneByOrFail({ id: saleId });
-    const number = remitoNumber ?? await this.generateNumber();
-    const remito = this.remitoRepo.create({ sale, remitoNumber: number, format, status: 'PENDING' });
+  async create(dto: CreateRemitoDto) {
+    const client = await this.clientRepo.findOne({
+      where: { id: dto.clientId },
+    });
+
+    if (!client) {
+      throw new NotFoundException('Cliente no encontrado');
+    }
+
+    const remito = this.remitoRepo.create({
+      type: dto.type,
+      saleId: dto.saleId,
+      paymentId: dto.paymentId,
+      client,
+      snapshot: dto.snapshot,
+    });
+
     return this.remitoRepo.save(remito);
   }
 
-  async markPrinted(remitoId: string) {
-    const remito = await this.remitoRepo.findOneByOrFail({ id: remitoId });
-    remito.status = 'PRINTED';
-    remito.printedAt = new Date();
-    return this.remitoRepo.save(remito);
+  async findOne(id: string) {
+    const remito = await this.remitoRepo.findOne({
+      where: { id },
+      relations: ['client'],
+    });
+
+    if (!remito) {
+      throw new NotFoundException('Remito no encontrado');
+    }
+
+    return remito;
   }
 
-  private async generateNumber() {
-    // Ejemplo simple: prefijo y timestamp
-    return `R-${Date.now()}`;
+  async findByClient(clientId: string) {
+    return this.remitoRepo.find({
+      where: { client: { id: clientId } },
+      order: { createdAt: 'DESC' },
+      relations: ['client'],
+    });
   }
 }

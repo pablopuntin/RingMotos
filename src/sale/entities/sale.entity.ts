@@ -47,14 +47,12 @@ items: SaleItem[];
   @OneToMany(() => AccountEntry, (ae) => ae.sale)
   accountEntries: AccountEntry[];
 
-//  @OneToOne(() => Remito, (remito) => remito.sale, { cascade: true })
-// remito: Remito;
 
-@OneToOne(() => Remito, (remito) => remito.sale, {
-  nullable: true,
-})
-@JoinColumn() // 👈 ESTO ES OBLIGATORIO
-remito?: Remito;
+// @OneToOne(() => Remito, (remito) => remito.sale, {
+//   nullable: true,
+// })
+// @JoinColumn() // 👈 ESTO ES OBLIGATORIO
+// remito?: Remito;
 
 @ManyToOne(() => User, { nullable: false })
 soldBy: User;

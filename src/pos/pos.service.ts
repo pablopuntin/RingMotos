@@ -1,110 +1,3 @@
-// import {
-//   Injectable,
-//   ConflictException,
-// } from '@nestjs/common';
-// import { SalesService } from 'src/sale/sale.service';
-// import { PaymentService } from 'src/payment/payment.service';
-// import { PosSaleActionDto } from './dto/pos-sale-action.dto';
-// import { AccountEntryService } from 'src/acount-entry/acount-entry.service';
-
-// @Injectable()
-// export class PosService {
-//   constructor(
-//     private readonly salesService: SalesService,
-//     private readonly paymentService: PaymentService,
-//     private readonly accountEntryService: AccountEntryService,
-//   ) {}
-
-//   async handleSaleAction(
-//     saleId: string,
-//     dto: PosSaleActionDto,
-//     user: any,
-//   ) {
-//     // 1️⃣ Confirmar venta
-//     const sale = await this.salesService.confirm(saleId);
-
-//     // 2️⃣ Cargo en cuenta corriente
-//     await this.accountEntryService.createChargeForSale(sale);
-
-//     // 3️⃣ Pago (si corresponde)
-//     if (dto.action === 'PAY') {
-//       if (!dto.amount || dto.amount < 0) {
-//         throw new ConflictException('Monto inválido');
-//       }
-
-//       if (!dto.paymentMethod) {
-//         throw new ConflictException(
-//           'paymentMethod es obligatorio',
-//         );
-//       }
-
-   
-//     await this.paymentService.create(
-//   {
-//     amount: dto.amount,
-//     paymentMethod: dto.paymentMethod,
-//     allocations: [
-//       { saleId: sale.id, amount: dto.amount },
-//     ],
-//   },
-//   user.id, // userId separado como segundo argumento
-// );
-//     }
-
-//     // 4️⃣ Volver a leer la venta COMPLETA
-//     const fullSale = await this.salesService.findOne(sale.id);
-
-//     if (!fullSale) {
-//       throw new ConflictException(
-//         'No se pudo obtener la venta',
-//       );
-//     }
-
-//     // 5️⃣ Calcular resumen (SOLO FORMATO)
-//     const entrega =
-//       fullSale.paymentAllocations?.reduce(
-//         (sum, p) => sum + Number(p.amountApplied),
-//         0,
-//       ) ?? 0;
-
-//     const saldoVenta =
-//       Number(fullSale.totalAmount) - entrega;
-
-//     const saldoTotal =
-//       await this.accountEntryService.getLastBalance(
-//         fullSale.client.id,
-//       );
-
-//     const saldoAnterior =
-//       saldoTotal - Number(saldoVenta);
-
-//     // 6️⃣ JSON largo (el que pediste)
-//     return {
-//       id: fullSale.id,
-//       client: {
-//         id: fullSale.client.id,
-//         name: `${fullSale.client.name} ${fullSale.client.lastName}`,
-//         totalDebtCache:
-//           fullSale.client.totalDebtCache,
-//       },
-//       status: fullSale.status,
-//       totalAmount: fullSale.totalAmount,
-//       paidAmount: fullSale.paidAmount,
-//       items: fullSale.items,
-//       paymentAllocations:
-//         fullSale.paymentAllocations ?? [],
-//       summary: {
-//         entrega: entrega.toFixed(2),
-//         saldoVenta: saldoVenta.toFixed(2),
-//         saldoAnterior:
-//           saldoAnterior.toFixed(2),
-//         saldoTotal: saldoTotal.toFixed(2),
-//       },
-//     };
-//   }
-// }
-
-//ref
 import {
   Injectable,
   ConflictException,
@@ -113,6 +6,7 @@ import { SalesService } from 'src/sale/sale.service';
 import { PaymentService } from 'src/payment/payment.service';
 import { PosSaleActionDto } from './dto/pos-sale-action.dto';
 import { AccountEntryService } from 'src/acount-entry/acount-entry.service';
+import { RemitoService } from 'src/remito/remito.service';
 
 @Injectable()
 export class PosService {
@@ -120,6 +14,7 @@ export class PosService {
     private readonly salesService: SalesService,
     private readonly paymentService: PaymentService,
     private readonly accountEntryService: AccountEntryService,
+    private readonly remitoService: RemitoService
   ) {}
 
   async handleSaleAction(
@@ -216,24 +111,82 @@ if (isFinalConsumer && dto.action === 'NO_PAYMENT') {
     // ─────────────────────────────
     // 6️⃣ Respuesta final (más limpia)
     // ─────────────────────────────
-    return {
-      id: fullSale.id,
-      client: {
-        id: fullSale.client.id,
-        name: `${fullSale.client.name} ${fullSale.client.lastName}`,
-        totalDebtCache: fullSale.client.totalDebtCache,
-      },
-      status: fullSale.status,
-      totalAmount: fullSale.totalAmount,
-      paidAmount: fullSale.paidAmount,
-      items: fullSale.items,
-      paymentAllocations: fullSale.paymentAllocations ?? [],
-      summary: {
-        entrega: entrega.toFixed(2),
-        saldoVenta: saldoVenta.toFixed(2),
-        saldoAnterior: saldoAnterior.toFixed(2),
-        saldoTotal: saldoTotal.toFixed(2),
-      },
-    };
-  }
+  //   return {
+  //     id: fullSale.id,
+  //     client: {
+  //       id: fullSale.client.id,
+  //       name: `${fullSale.client.name} ${fullSale.client.lastName}`,
+  //       totalDebtCache: fullSale.client.totalDebtCache,
+  //     },
+  //     status: fullSale.status,
+  //     totalAmount: fullSale.totalAmount,
+  //     paidAmount: fullSale.paidAmount,
+  //     items: fullSale.items,
+  //     paymentAllocations: fullSale.paymentAllocations ?? [],
+  //     summary: {
+  //       entrega: entrega.toFixed(2),
+  //       saldoVenta: saldoVenta.toFixed(2),
+  //       saldoAnterior: saldoAnterior.toFixed(2),
+  //       saldoTotal: saldoTotal.toFixed(2),
+  //     },
+  //   };
+  // }
+
+  //ref
+  // ===============================
+// 6️⃣ ARMAMOS SNAPSHOT DE REMITO
+// ===============================
+
+const snapshot = {
+  id: fullSale.id,
+  type: 'SALE_FINALIZED',
+  date: new Date(),
+
+  sale: {
+    id: fullSale.id,
+    status: fullSale.status,
+    totalAmount: Number(fullSale.totalAmount).toFixed(2),
+    paidAmount: Number(fullSale.paidAmount).toFixed(2),
+    items: fullSale.items.map(item => ({
+      id: item.id,
+      description: item.description,
+      qty: item.qty,
+      unitPrice: Number(item.unitPrice).toFixed(2),
+      lineTotal: Number(item.lineTotal).toFixed(2),
+    })),
+  },
+
+  client: {
+    id: fullSale.client.id,
+    name: `${fullSale.client.name} ${fullSale.client.lastName}`,
+    totalDebtCache: Number(saldoTotal).toFixed(2),
+  },
+
+  paymentAllocations:
+    fullSale.paymentAllocations ?? [],
+
+  summary: {
+    entrega: entrega.toFixed(2),
+    saldoVenta: saldoVenta.toFixed(2),
+    saldoAnterior: saldoAnterior.toFixed(2),
+    saldoTotal: saldoTotal.toFixed(2),
+  },
+};
+
+// ===============================
+// 7️⃣ GUARDAMOS REMITO (SNAPSHOT)
+// ===============================
+await this.remitoService.create({
+  type: 'SALE_FINALIZED',
+  saleId: fullSale.id,
+  clientId: fullSale.client.id,
+  snapshot,
+});
+
+// ===============================
+// 8️⃣ DEVOLVEMOS AL FRONT
+// ===============================
+return snapshot;
+  }    
+
 }

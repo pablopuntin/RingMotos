@@ -16,6 +16,7 @@ import { CashRegister } from 'src/cash-register/entities/cash-register.entity';
 import { Client } from 'src/client/entities/client.entity';
 import { CreateDirectPaymentDto } from './dto/create-direct-payment.dto';
 import { User } from 'src/user/entities/user.entity';
+import { RemitoService } from 'src/remito/remito.service';
 
 @Injectable()
 export class PaymentService {
@@ -30,6 +31,8 @@ export class PaymentService {
     private readonly allocationRepo: Repository<PaymentAllocation>,
 
     private readonly dataSource: DataSource,
+
+    private readonly remitoService: RemitoService,
   ) {}
 
   /* =========================
@@ -178,83 +181,216 @@ export class PaymentService {
   /* =========================
      PAGO DIRECTO (SIN VENTA)
   ========================== */
+  // async createDirectPayment(dto: CreateDirectPaymentDto, userId: string) {
+  //   if (dto.amount <= 0) {
+  //     throw new BadRequestException('El monto debe ser mayor a 0');
+  //   }
+
+  //   return this.dataSource.transaction(async manager => {
+  //     const client = await manager.findOne(Client, {
+  //       where: { id: dto.clientId },
+  //     });
+  //     if (!client) throw new NotFoundException('Cliente no encontrado');
+
+  //     const user = await manager.findOne(User, {
+  //       where: { id: userId },
+  //     });
+  //     if (!user) throw new NotFoundException('Usuario no encontrado');
+
+  //     let cash = await manager.findOne(CashRegister, {
+  //       where: { openedBy: user.id, status: 'OPEN' },
+  //     });
+
+  //     if (!cash) {
+  //       cash = await manager.save(
+  //         manager.create(CashRegister, {
+  //           name: `Caja automática ${user.firstname}`,
+  //           openingAmount: 0,
+  //           status: 'OPEN',
+  //           openedBy: user.id,
+  //           openedAt: new Date(),
+  //         }),
+  //       );
+  //     }
+
+  //     const payment = await manager.save(
+  //       manager.create(Payment, {
+  //         amount: dto.amount,
+  //         paymentMethod: dto.paymentMethod,
+  //         receivedBy: user,
+  //         cashRegister: cash,
+  //         status: 'COMPLETED',
+  //       }),
+  //     );
+
+  //     await manager.save(
+  //       manager.create(CashMovement, {
+  //         cashRegister: cash,
+  //         type: 'IN',
+  //         amount: dto.amount,
+  //         reason: 'Pago directo a cuenta corriente',
+  //         relatedPaymentId: payment.id,
+  //       }),
+  //     );
+
+  //     const lastEntry = await manager.findOne(AccountEntry, {
+  //       where: { client: { id: client.id } },
+  //       order: { createdAt: 'DESC' },
+  //     });
+
+  //     const previous = Number(lastEntry?.balanceAfter ?? 0);
+  //     const newBalance = previous - dto.amount;
+
+  //     await manager.save(
+  //       manager.create(AccountEntry, {
+  //         client,
+  //         payment,
+  //         type: 'PAYMENT',
+  //         amount: dto.amount,
+  //         balanceAfter: newBalance,
+  //         description:
+  //           dto.description ?? 'Pago directo a cuenta corriente',
+  //         status: 'ACTIVE',
+  //       }),
+  //     );
+
+  //     client.totalDebtCache = newBalance;
+  //     await manager.save(client);
+
+  //     return payment;
+  //   });
+  // }
+
+  //ref
   async createDirectPayment(dto: CreateDirectPaymentDto, userId: string) {
-    if (dto.amount <= 0) {
-      throw new BadRequestException('El monto debe ser mayor a 0');
+  if (dto.amount <= 0) {
+    throw new BadRequestException('El monto debe ser mayor a 0');
+  }
+
+  return this.dataSource.transaction(async manager => {
+    // ======== CLIENTE ========
+    const client = await manager.findOne(Client, {
+      where: { id: dto.clientId },
+    });
+    if (!client) throw new NotFoundException('Cliente no encontrado');
+
+    // ======== USUARIO ========
+    const user = await manager.findOne(User, {
+      where: { id: userId },
+    });
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+
+    // ======== CAJA ========
+    let cash = await manager.findOne(CashRegister, {
+      where: { openedBy: user.id, status: 'OPEN' },
+    });
+
+    if (!cash) {
+      cash = await manager.save(
+        manager.create(CashRegister, {
+          name: `Caja automática ${user.firstname}`,
+          openingAmount: 0,
+          status: 'OPEN',
+          openedBy: user.id,
+          openedAt: new Date(),
+        }),
+      );
     }
 
-    return this.dataSource.transaction(async manager => {
-      const client = await manager.findOne(Client, {
-        where: { id: dto.clientId },
-      });
-      if (!client) throw new NotFoundException('Cliente no encontrado');
+    // ======== PAYMENT ========
+    const payment = await manager.save(
+      manager.create(Payment, {
+        amount: dto.amount,
+        paymentMethod: dto.paymentMethod,
+        receivedBy: user,
+        cashRegister: cash,
+        status: 'COMPLETED',
+      }),
+    );
 
-      const user = await manager.findOne(User, {
-        where: { id: userId },
-      });
-      if (!user) throw new NotFoundException('Usuario no encontrado');
+    // ======== MOVIMIENTO DE CAJA ========
+    await manager.save(
+      manager.create(CashMovement, {
+        cashRegister: cash,
+        type: 'IN',
+        amount: dto.amount,
+        reason: 'Pago directo a cuenta corriente',
+        relatedPaymentId: payment.id,
+      }),
+    );
 
-      let cash = await manager.findOne(CashRegister, {
-        where: { openedBy: user.id, status: 'OPEN' },
-      });
-
-      if (!cash) {
-        cash = await manager.save(
-          manager.create(CashRegister, {
-            name: `Caja automática ${user.firstname}`,
-            openingAmount: 0,
-            status: 'OPEN',
-            openedBy: user.id,
-            openedAt: new Date(),
-          }),
-        );
-      }
-
-      const payment = await manager.save(
-        manager.create(Payment, {
-          amount: dto.amount,
-          paymentMethod: dto.paymentMethod,
-          receivedBy: user,
-          cashRegister: cash,
-          status: 'COMPLETED',
-        }),
-      );
-
-      await manager.save(
-        manager.create(CashMovement, {
-          cashRegister: cash,
-          type: 'IN',
-          amount: dto.amount,
-          reason: 'Pago directo a cuenta corriente',
-          relatedPaymentId: payment.id,
-        }),
-      );
-
-      const lastEntry = await manager.findOne(AccountEntry, {
-        where: { client: { id: client.id } },
-        order: { createdAt: 'DESC' },
-      });
-
-      const previous = Number(lastEntry?.balanceAfter ?? 0);
-      const newBalance = previous - dto.amount;
-
-      await manager.save(
-        manager.create(AccountEntry, {
-          client,
-          payment,
-          type: 'PAYMENT',
-          amount: dto.amount,
-          balanceAfter: newBalance,
-          description:
-            dto.description ?? 'Pago directo a cuenta corriente',
-          status: 'ACTIVE',
-        }),
-      );
-
-      client.totalDebtCache = newBalance;
-      await manager.save(client);
-
-      return payment;
+    // ======== CUENTA CORRIENTE ========
+    const lastEntry = await manager.findOne(AccountEntry, {
+      where: { client: { id: client.id } },
+      order: { createdAt: 'DESC' },
     });
-  }
+
+    const previous = Number(lastEntry?.balanceAfter ?? 0);
+    const newBalance = previous - dto.amount;
+
+    const accountEntry = await manager.save(
+      manager.create(AccountEntry, {
+        client,
+        payment,
+        type: 'PAYMENT',
+        amount: dto.amount,
+        balanceAfter: newBalance,
+        description:
+          dto.description ?? 'Pago directo a cuenta corriente',
+        status: 'ACTIVE',
+      }),
+    );
+
+    client.totalDebtCache = newBalance;
+    await manager.save(client);
+
+    // ===============================
+    // ✅ ARMAMOS EL JSON TIPO REMITO
+    // ===============================
+
+    const snapshot = {
+      id: payment.id,
+      type: 'DIRECT_PAYMENT',
+      date: new Date(),
+
+      client: {
+        id: client.id,
+        name: `${client.name} ${client.lastName ?? ''}`,
+        totalDebtCache: newBalance.toFixed(2),
+      },
+
+      payment: {
+        id: payment.id,
+        amount: dto.amount.toFixed(2),
+        paymentMethod: dto.paymentMethod,
+        date: new Date(),
+      },
+
+      summary: {
+        entrega: dto.amount.toFixed(2),
+        saldoAnterior: previous.toFixed(2),
+        saldoTotal: newBalance.toFixed(2),
+      },
+    };
+
+    // ===============================
+    // ✅ GUARDAMOS EL REMITO (SNAPSHOT)
+    // ===============================
+
+    await this.remitoService.create({
+      type: 'DIRECT_PAYMENT',
+      paymentId: payment.id,
+      clientId: client.id,
+      snapshot,
+    });
+
+    // ===============================
+    // ✅ DEVOLVEMOS EL JSON AL FRONT
+    // ===============================
+
+    return snapshot;
+  });
+}
+
+
 }
