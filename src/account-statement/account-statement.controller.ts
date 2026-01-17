@@ -39,4 +39,28 @@ export class AccountStatementController {
       hasta,
     );
   }
+
+  //controller para proveedores
+ @Get('supplier/:supplierId')
+@ApiOperation({ summary: 'Obtener estado de cuenta para proveedor' })
+@ApiParam({ name: 'supplierId', description: 'ID del proveedor' })
+@ApiQuery({ name: 'desde', required: false, description: 'Fecha desde (YYYY-MM-DD)' })
+@ApiQuery({ name: 'hasta', required: false, description: 'Fecha hasta (YYYY-MM-DD)' })
+@ApiQuery({ name: 'limit', required: false, description: 'Cantidad máxima de movimientos a devolver' })
+async getSupplierStatement(
+  @Param('supplierId') supplierId: string,
+  @Query('desde') desde?: string,
+  @Query('hasta') hasta?: string,
+  @Query('limit') limitStr?: string,
+) {
+  const limit = limitStr ? parseInt(limitStr, 10) : 10;
+  return this.accountStatementService.getSupplierStatement(
+    supplierId,
+    desde,
+    hasta,
+    limit,
+  );
+}
+
+
 }
