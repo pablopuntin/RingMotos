@@ -1,35 +1,40 @@
-// import { ApiProperty } from '@nestjs/swagger';
-// import { IsUUID, IsString, IsEnum, IsOptional, IsDateString } from 'class-validator';
+// import { IsString, IsOptional, IsObject } from 'class-validator';
 
 // export class CreateRemitoDto {
-//   @ApiProperty({ description: "Número de remito", example: "0001-00001234" })
+//   // @IsString()
+//   // type: 'SALE_FINALIZED' | 'DIRECT_PAYMENT';
+
 //   @IsString()
-//   remitoNumber: string;
-
-//   @ApiProperty({ description: "Formato del remito", example: "A4" })
-//   @IsString()
-//   format: string;
-
-//   @ApiProperty({ description: "Estado del remito", example: "PRINTED", enum: ['PENDING', 'PRINTED'] })
-//   @IsEnum(['PENDING', 'PRINTED'])
-//   status: string;
-
-//   @ApiProperty({ description: "Fecha de impresión", example: "2025-12-12T20:20:00.000Z", required: false })
+//    type:
+//     | 'SALE_FINALIZED'
+//     | 'DIRECT_PAYMENT'
+//     | 'PURCHASE_CONFIRMED'
+//     | 'SUPPLIER_PAYMENT'; // lo vamos a usar después
 //   @IsOptional()
-//   @IsDateString()
-//   printedAt?: Date;
+//   @IsString()
+//   saleId?: string;
 
-//   @ApiProperty({ description: "UUID de la venta asociada" })
-//   @IsUUID()
-//   saleId: string;
+//   @IsOptional()
+//   @IsString()
+//   paymentId?: string;
+
+//   @IsString()
+//   clientId: string;
+
+//   @IsObject()
+//   snapshot: any;
 // }
 
-//ref
+//REF
 import { IsString, IsOptional, IsObject } from 'class-validator';
 
 export class CreateRemitoDto {
   @IsString()
-  type: 'SALE_FINALIZED' | 'DIRECT_PAYMENT';
+  type:
+    | 'SALE_FINALIZED'
+    | 'DIRECT_PAYMENT'
+    | 'PURCHASE_CONFIRMED'
+    | 'SUPPLIER_PAYMENT';
 
   @IsOptional()
   @IsString()
@@ -39,8 +44,17 @@ export class CreateRemitoDto {
   @IsString()
   paymentId?: string;
 
+  @IsOptional()
   @IsString()
-  clientId: string;
+  purchaseId?: string;   // ✅ NUEVO
+
+  @IsOptional()
+  @IsString()
+  clientId?: string;
+
+  @IsOptional()
+  @IsString()
+  supplierId?: string;   // ya lo habíamos agregado
 
   @IsObject()
   snapshot: any;

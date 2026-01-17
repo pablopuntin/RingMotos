@@ -1,68 +1,3 @@
-// import { Controller, Get, Post, Body, Param } from '@nestjs/common';
-// import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
-// import { PurchasesService } from './purchase.service';
-// import { Purchase } from './entities/purchase.entity';
-
-// @ApiTags('Purchases')
-// @Controller('purchases')
-// export class PurchasesController {
-//   constructor(private readonly service: PurchasesService) {}
-
-//   @Post()
-//   @ApiOperation({
-//     summary: 'Crear una nueva compra',
-//     description: 'Genera una compra en estado DRAFT asociada a un proveedor y con sus ítems. Calcula el total y guarda la compra.'
-//   })
-//   @ApiBody({
-//     schema: {
-//       type: 'object',
-//       properties: {
-//         supplierId: { type: 'string', description: 'ID del proveedor' },
-//         items: {
-//           type: 'array',
-//           items: {
-//             type: 'object',
-//             properties: {
-//               description: { type: 'string' },
-//               qty: { type: 'number' },
-//               unitCost: { type: 'number' },
-//               productId: { type: 'string', nullable: true }
-//             }
-//           }
-//         }
-//       }
-//     }
-//   })
-//   @ApiResponse({ status: 201, description: 'Compra creada exitosamente', type: Purchase })
-//   create(@Body() dto: any) {
-//     return this.service.create(dto);
-//   }
-
-//   @Post(':id/confirm')
-//   @ApiOperation({
-//     summary: 'Confirmar una compra',
-//     description: 'Cambia el estado de una compra de DRAFT a CONFIRMED, actualiza la deuda del proveedor y genera un asiento en cuenta corriente.'
-//   })
-//   @ApiParam({ name: 'id', type: 'string', description: 'ID de la compra a confirmar' })
-//   @ApiResponse({ status: 200, description: 'Compra confirmada exitosamente', type: Purchase })
-//   @ApiResponse({ status: 404, description: 'Compra no encontrada' })
-//   @ApiResponse({ status: 400, description: 'Solo se pueden confirmar compras en estado DRAFT' })
-//   confirm(@Param('id') id: string) {
-//     return this.service.confirm(id);
-//   }
-
-//   @Get()
-//   @ApiOperation({
-//     summary: 'Listar compras',
-//     description: 'Devuelve todas las compras, con sus ítems y proveedor. Se pueden filtrar por proveedor y estado.'
-//   })
-//   @ApiResponse({ status: 200, description: 'Listado de compras', type: [Purchase] })
-//   list() {
-//     return this.service.list();
-//   }
-// }
-
-//ref
 import {
   Controller,
   Get,
@@ -77,6 +12,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiQuery,
+  ApiBody
 } from '@nestjs/swagger';
 import { PurchasesService } from './purchase.service';
 import { Purchase } from './entities/purchase.entity';
@@ -89,6 +25,8 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { PurchaseStatus } from './entities/purchase.entity';
 
+
+
 @ApiTags('Purchases')
 @ApiBearerAuth()
 @AuthSwagger()
@@ -96,7 +34,7 @@ import { PurchaseStatus } from './entities/purchase.entity';
 @Roles('superadmin')
 @Controller('purchases')
 export class PurchasesController {
-  constructor(private readonly service: PurchasesService) {}
+  constructor(private readonly purchaseService: PurchasesService) {}
 
   /* =========================
      Crear compra (DRAFT)
@@ -114,7 +52,7 @@ export class PurchasesController {
     type: Purchase,
   })
   create(@Body() dto: CreatePurchaseDto) {
-    return this.service.create(dto);
+    return this.purchaseService.create(dto);
   }
 
   /* =========================
@@ -137,7 +75,7 @@ export class PurchasesController {
     type: Purchase,
   })
   confirm(@Param('id') id: string) {
-    return this.service.confirm(id);
+    return this.purchaseService.confirm(id);
   }
 
   /* =========================
@@ -169,7 +107,44 @@ export class PurchasesController {
   @Query('supplierId') supplierId?: string,
   @Query('status') status?: PurchaseStatus,
 ) {
-  return this.service.list({ supplierId, status });
+  return this.purchaseService.list({ supplierId, status });
 }
+
+@Post(':id/confirm-and-pay')
+@ApiOperation({
+  summary: 'Confirmar compra y pagar (POS de compras)',
+  description:
+    'Confirma una compra DRAFT y permite pagar total o parcialmente en el mismo acto.',
+})
+@ApiParam({
+  name: 'id',
+  description: 'ID de la compra en estado DRAFT',
+})
+@ApiBody({
+  description: 'Monto que se entrega al proveedor al momento de confirmar',
+  required: false,
+  schema: {
+    type: 'object',
+    properties: {
+      entrega: {
+        type: 'number',
+        example: 100000,
+        description:
+          'Monto que se paga en el momento. Puede ser 0, parcial o total.',
+      },
+    },
+  },
+})
+@ApiResponse({
+  status: 200,
+  description: 'Compra confirmada y (opcionalmente) pagada',
+})
+async confirmAndPay(
+  @Param('id') id: string,
+  @Body() body?: { entrega?: number },
+) {
+  return this.purchaseService.confirmAndPay(id, body?.entrega ?? 0);
+}
+
 
 }

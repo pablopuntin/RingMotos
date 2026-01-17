@@ -35,12 +35,12 @@ export class CreatePurchaseItemDto {
   @Min(0)
   unitCost: number;
 
-  @ApiProperty({
-    description: 'Total de la línea',
-    example: 24000.0,
-    minimum: 0,
-  })
-  @IsNumber()
-  @Min(0)
-  lineTotal: number;
+  // @ApiProperty({
+  //   description: 'Total de la línea',
+  //   example: 24000.0,
+  //   minimum: 0,
+  // })
+  // @IsNumber()
+  // @Min(0)
+  // lineTotal: number;
 }

@@ -9,6 +9,6 @@ import { Client } from 'src/client/entities/client.entity';
   imports: [TypeOrmModule.forFeature([Remito, Client])],
   controllers: [RemitoController],
   providers: [RemitoService],
-  exports: [RemitoService],
+  exports: [RemitoService, TypeOrmModule],
 })
 export class RemitoModule {}

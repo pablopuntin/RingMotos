@@ -6,10 +6,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Supplier } from 'src/supplier/entities/supplier.entity';
 import { PurchaseItem } from 'src/purchase-item/entities/purchase-item.entity';
 import { SupplierAccountEntry } from 'src/supplier-account-entry/entities/supplier-account-entry.entity';
+import { RemitoModule } from 'src/remito/remito.module';
 
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Purchase, Supplier, PurchaseItem, SupplierAccountEntry])],
+  imports: [TypeOrmModule.forFeature([Purchase, Supplier, PurchaseItem, SupplierAccountEntry]),
+RemitoModule,
+],
   controllers: [PurchasesController],
   providers: [PurchasesService],
 })
