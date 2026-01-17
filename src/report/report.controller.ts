@@ -111,7 +111,8 @@ export class ReportsController {
     @Query() query: SalesReportQueryDto,
   ) {
     const { from, to } = resolveDateRange(query.from, query.to);
-    return this.reportsService.getSalesByUser(from, to, clientId);
+    return this.reportsService.getSalesByClient(from, to, clientId);
+
   }
 
   /* =========================

@@ -1,9 +1,7 @@
-import { SupplierPaymentStatus } from './entities/supplier-payment.entity';
-// supplier-payments/supplier-payments.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { SupplierPayment } from './entities/supplier-payment.entity';
+import { SupplierPayment, SupplierPaymentStatus } from './entities/supplier-payment.entity';
 import { Supplier } from 'src/supplier/entities/supplier.entity';
 import { CashRegister } from 'src/cash-register/entities/cash-register.entity';
 import { CashMovement } from 'src/cash-movement/entities/cash-movement.entity';
@@ -11,97 +9,80 @@ import {
   SupplierAccountEntry,
   SupplierAccountEntryType,
 } from '../supplier-account-entry/entities/supplier-account-entry.entity';
-import { BadRequestException } from '@nestjs/common';
 import { CreateSupplierPaymentDto } from './dto/create-supplier-payment.dto';
-
-
+import { IsNull } from 'typeorm';
 
 @Injectable()
 export class SupplierPaymentsService {
   constructor(
     private readonly ds: DataSource,
-    @InjectRepository(SupplierPayment) private readonly spRepo: Repository<SupplierPayment>,
-    @InjectRepository(Supplier) private readonly supplierRepo: Repository<Supplier>,
-    @InjectRepository(CashRegister) private readonly cashRepo: Repository<CashRegister>,
-    @InjectRepository(CashMovement) private readonly cmRepo: Repository<CashMovement>,
-    @InjectRepository(SupplierAccountEntry) private readonly saeRepo: Repository<SupplierAccountEntry>,
+
+    @InjectRepository(SupplierPayment)
+    private readonly spRepo: Repository<SupplierPayment>,
+
+    @InjectRepository(Supplier)
+    private readonly supplierRepo: Repository<Supplier>,
+
+    @InjectRepository(CashRegister)
+    private readonly cashRepo: Repository<CashRegister>,
+
+    @InjectRepository(CashMovement)
+    private readonly cmRepo: Repository<CashMovement>,
+
+    @InjectRepository(SupplierAccountEntry)
+    private readonly saeRepo: Repository<SupplierAccountEntry>,
   ) {}
 
-  // async create(dto: {
-  //   supplierId: string;
-  //   cashRegisterId: string;
-  //   amount: number;
-  //   paymentMethod: string;
-  //   paymentDate: string;
-  //   description?: string;
-  // }) {
-  //   return this.ds.transaction(async manager => {
-  //     const supplier = await manager.findOneByOrFail(Supplier, { id: dto.supplierId });
-  //     const cashRegister = await manager.findOneByOrFail(CashRegister, { id: dto.cashRegisterId });
-
-  //     // 1️⃣ Crear pago
-  //     const payment = manager.create(SupplierPayment, {
-  //       supplier,
-  //       cashRegister,
-  //       amount: dto.amount,
-  //       paymentMethod: dto.paymentMethod,
-  //       paymentDate: new Date(dto.paymentDate),
-  //       status: SupplierPaymentStatus.COMPLETED,
-  //     });
-  //     await manager.save(payment);
-
-  //     // 2️⃣ Actualizar deuda del proveedor
-  //     const newBalance = supplier.totalDebtCache - dto.amount;
-  //     supplier.totalDebtCache = Math.max(newBalance, 0);
-  //     await manager.save(supplier);
-
-  //     // 3️⃣ Movimiento en cuenta del proveedor
-  //     const accountEntry = manager.create(SupplierAccountEntry, {
-  //       supplier,
-  //       supplierPayment: payment,
-  //       type: SupplierAccountEntryType.PAYMENT,
-  //       amount: dto.amount,
-  //       balanceAfter: supplier.totalDebtCache,
-  //       description: dto.description ?? `Pago a proveedor ${supplier.name}`,
-  //     });
-  //     await manager.save(accountEntry);
-
-  //     // 4️⃣ Movimiento de caja
-  //     const movement = manager.create(CashMovement, {
-  //       cashRegister,
-  //       type: 'OUT',
-  //       amount: dto.amount,
-  //       reason: `Pago a proveedor ${supplier.name}`,
-  //       relatedSupplierPayment: payment,
-  //     });
-  //     await manager.save(movement);
-
-  //     return payment;
-  //   });
-  // }
-
-  //ref
+ 
   async create(dto: CreateSupplierPaymentDto) {
   return this.ds.transaction(async manager => {
+    // const supplier = await manager.findOneByOrFail(Supplier, {
+    //   id: dto.supplierId,
+    // });
+
+    // if (supplier.totalDebtCache <= 0) {
+    //   throw new BadRequestException('El proveedor no tiene deuda');
+    //}
+
+    //ref
     const supplier = await manager.findOneByOrFail(Supplier, { id: dto.supplierId });
 
-    if (supplier.totalDebtCache <= 0) {
-      throw new BadRequestException('El proveedor no tiene deuda');
+const debtBefore = supplier.totalDebtCache; // 👈 snapshot previo
+
+if (debtBefore <= 0) {
+  throw new BadRequestException('El proveedor no tiene deuda');
+}
+
+
+    // 🔹 Buscar caja abierta automáticamente
+    const cashRegister = await manager.findOne(CashRegister, {
+      where: { closedAt: IsNull() },
+    });
+
+    if (!cashRegister) {
+      throw new BadRequestException('No hay ninguna caja abierta');
     }
 
+    // 🔹 Tomamos el menor entre lo que debe y lo que paga
     const amount = Math.min(dto.amount, supplier.totalDebtCache);
 
+    // 🔹 Actualizamos deuda del proveedor
     supplier.totalDebtCache -= amount;
     await manager.save(supplier);
 
+    // 🔹 Creamos el pago
     const payment = manager.create(SupplierPayment, {
       supplier,
+      cashRegister,
       amount,
       paymentMethod: dto.paymentMethod,
       paymentDate: new Date(),
+      status: SupplierPaymentStatus.COMPLETED,
     });
+
     await manager.save(payment);
 
+    // 🔹 Asiento contable del proveedor (cuenta corriente)
     await manager.save(
       manager.create(SupplierAccountEntry, {
         supplier,
@@ -109,14 +90,34 @@ export class SupplierPaymentsService {
         type: SupplierAccountEntryType.PAYMENT,
         amount,
         balanceAfter: supplier.totalDebtCache,
+        description: `Pago a proveedor ${supplier.name}`,
       }),
     );
 
-    return payment;
-  });
-}
+    // 🔹 MOVIMIENTO DE CAJA (OUT = egreso)
+    await manager.save(
+      manager.create(CashMovement, {
+        cashRegister,
+        type: 'OUT',
+        amount,
+        reason: `Pago a proveedor ${supplier.name}`,
+        relatedSupplierPayment: payment,
+      }),
+    );
+
+    return {
+  payment,
+  summary: {
+    pagoRealizado: amount,
+    deudaAnterior: debtBefore,
+    deudaActual: supplier.totalDebtCache,
+  },
+};
+  });   
+} 
 
 
+ 
   async reverse(paymentId: string) {
     return this.ds.transaction(async manager => {
       const payment = await manager.findOne(SupplierPayment, {
@@ -124,22 +125,27 @@ export class SupplierPaymentsService {
         relations: { supplier: true, cashRegister: true },
       });
 
-      if (!payment) throw new Error('Payment not found');
-      if (payment.status !== SupplierPaymentStatus.COMPLETED) {
-        throw new Error('Only COMPLETED payments can be reversed');
+      if (!payment) {
+        throw new NotFoundException('Pago no encontrado');
       }
 
-      // 1️⃣ Revertir estado del pago
+      if (payment.status !== SupplierPaymentStatus.COMPLETED) {
+        throw new BadRequestException(
+          'Solo se pueden revertir pagos COMPLETED',
+        );
+      }
+
+      // 1️⃣ Cambiar estado del pago
       payment.status = SupplierPaymentStatus.REVERSED;
       await manager.save(payment);
 
       // 2️⃣ Revertir deuda del proveedor
       const supplier = payment.supplier;
-      supplier.totalDebtCache = supplier.totalDebtCache + payment.amount;
+      supplier.totalDebtCache = Number(supplier.totalDebtCache) + Number(payment.amount);
       await manager.save(supplier);
 
-      // 3️⃣ Movimiento contable del proveedor
-      const entry = manager.create(SupplierAccountEntry, {
+      // 3️⃣ Asiento contable de reversión
+      const reversalEntry = manager.create(SupplierAccountEntry, {
         supplier,
         supplierPayment: payment,
         type: SupplierAccountEntryType.ADJUSTMENT,
@@ -147,17 +153,19 @@ export class SupplierPaymentsService {
         balanceAfter: supplier.totalDebtCache,
         description: `Reversión pago proveedor ${supplier.name}`,
       });
-      await manager.save(entry);
 
-      // 4️⃣ Movimiento de caja
-      const movement = manager.create(CashMovement, {
+      await manager.save(reversalEntry);
+
+      // 4️⃣ Movimiento de caja (IN)
+      const cashMovement = manager.create(CashMovement, {
         cashRegister: payment.cashRegister,
         type: 'IN',
         amount: payment.amount,
         reason: `Reversión pago proveedor ${supplier.name}`,
         relatedSupplierPayment: payment,
       });
-      await manager.save(movement);
+
+      await manager.save(cashMovement);
 
       return payment;
     });

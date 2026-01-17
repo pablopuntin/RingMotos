@@ -29,7 +29,7 @@ import { ApiTags } from '@nestjs/swagger';
 @AuthSwagger()
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Roles('superadmin')
-@Controller('supplier-payments')
+@Controller('suppliers/:id/payments')
 export class SupplierPaymentsController {
   constructor(private readonly service: SupplierPaymentsService) {}
 
