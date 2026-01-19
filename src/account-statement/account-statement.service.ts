@@ -102,18 +102,83 @@ async getStatement(
 
 
 //metodo de estado de cuenta para supplier
+// async getSupplierStatement(
+//   supplierId: string,
+//   desde?: string,
+//   hasta?: string,
+//   limit = 10,
+// ): Promise<SupplierAccountStatementResponseDto> {
+//   const supplier = await this.supplierRepo.findOne({ where: { id: supplierId } });
+//   if (!supplier) throw new NotFoundException('Proveedor no encontrado');
+
+//   const remitoRepo = this.accountEntryRepo.manager.getRepository('Remito');
+
+//   const qb = remitoRepo.createQueryBuilder('r')
+//     .where("r.snapshot ->> '_supplierId' = :supplierId", { supplierId })
+//     .orderBy('r.createdAt', 'DESC');
+
+//   if (desde) {
+//     qb.andWhere('r.createdAt >= :desde', { desde: new Date(desde) });
+//   }
+
+//   if (hasta) {
+//     qb.andWhere('r.createdAt <= :hasta', { hasta: new Date(hasta) });
+//   }
+
+//   if (!desde && !hasta) {
+//     qb.take(limit);
+//   }
+
+//   const remitos = await qb.getMany();
+
+//   // El último saldo real, buscando en el snapshot summary
+//   const finalBalance = remitos.length > 0
+//     ? remitos[0].snapshot?.summary?.deudaActual ?? '0.00'
+//     : '0.00';
+
+//   const movements = remitos.map(r => ({
+//     id: r.id,
+//     type: r.type,
+//     date: r.createdAt,
+//     description: r.snapshot?.description ?? r.type,
+//     debit: r.type === 'PURCHASE_CONFIRMED' ? (r.snapshot?.totalAmount ?? '0.00') : '0',
+//     credit: r.type === 'SUPPLIER_PAYMENT' ? (r.snapshot?.payment?.amount ?? '0.00') : '0',
+//     balanceAfter: r.snapshot?.summary?.deudaActual ?? finalBalance,
+//     purchase: r.snapshot?.purchase ?? null,
+//     payment: r.snapshot?.payment ?? null,
+//     summary: r.snapshot?.summary ?? null,
+//     snapshot: r.snapshot, // incluir snapshot completo para detalle
+//   }));
+
+//   return {
+//     supplier: {
+//       id: supplier.id,
+//       name: supplier.name,
+//     },
+//     movements,
+//     finalBalance,
+//   };
+// }
+
+//ref
 async getSupplierStatement(
   supplierId: string,
   desde?: string,
   hasta?: string,
   limit = 10,
 ): Promise<SupplierAccountStatementResponseDto> {
-  const supplier = await this.supplierRepo.findOne({ where: { id: supplierId } });
-  if (!supplier) throw new NotFoundException('Proveedor no encontrado');
+  const supplier = await this.supplierRepo.findOne({
+    where: { id: supplierId },
+  });
+
+  if (!supplier) {
+    throw new NotFoundException('Proveedor no encontrado');
+  }
 
   const remitoRepo = this.accountEntryRepo.manager.getRepository('Remito');
 
-  const qb = remitoRepo.createQueryBuilder('r')
+  const qb = remitoRepo
+    .createQueryBuilder('r')
     .where("r.snapshot ->> '_supplierId' = :supplierId", { supplierId })
     .orderBy('r.createdAt', 'DESC');
 
@@ -131,23 +196,35 @@ async getSupplierStatement(
 
   const remitos = await qb.getMany();
 
-  // El último saldo real, buscando en el snapshot summary
-  const finalBalance = remitos.length > 0
-    ? remitos[0].snapshot?.summary?.deudaActual ?? '0.00'
-    : '0.00';
+  // 👉 Tomamos el saldo del snapshot más reciente
+  const finalBalance =
+    remitos.length > 0
+      ? remitos[0].snapshot?.summary?.deudaActual ?? '0.00'
+      : '0.00';
 
   const movements = remitos.map(r => ({
     id: r.id,
     type: r.type,
     date: r.createdAt,
-    description: r.snapshot?.description ?? r.type,
-    debit: r.type === 'PURCHASE_CONFIRMED' ? (r.snapshot?.totalAmount ?? '0.00') : '0',
-    credit: r.type === 'SUPPLIER_PAYMENT' ? (r.snapshot?.payment?.amount ?? '0.00') : '0',
-    balanceAfter: r.snapshot?.summary?.deudaActual ?? finalBalance,
+    description: r.snapshot?.type ?? r.type,
+
+    debit:
+      r.type === 'PURCHASE_CONFIRMED'
+        ? r.snapshot?.summary?.compraTotal ?? '0.00'
+        : '0.00',
+
+    credit:
+      r.type === 'SUPPLIER_PAYMENT'
+        ? r.snapshot?.summary?.pagoRealizado ?? '0.00'
+        : '0.00',
+
+    balanceAfter:
+      r.snapshot?.summary?.deudaActual ?? finalBalance,
+
     purchase: r.snapshot?.purchase ?? null,
     payment: r.snapshot?.payment ?? null,
     summary: r.snapshot?.summary ?? null,
-    snapshot: r.snapshot, // incluir snapshot completo para detalle
+    snapshot: r.snapshot,
   }));
 
   return {

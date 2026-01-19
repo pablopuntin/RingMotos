@@ -11,6 +11,7 @@ import {
 } from '../supplier-account-entry/entities/supplier-account-entry.entity';
 import { CreateSupplierPaymentDto } from './dto/create-supplier-payment.dto';
 import { IsNull } from 'typeorm';
+import { RemitoService } from 'src/remito/remito.service';
 
 @Injectable()
 export class SupplierPaymentsService {
@@ -31,30 +32,107 @@ export class SupplierPaymentsService {
 
     @InjectRepository(SupplierAccountEntry)
     private readonly saeRepo: Repository<SupplierAccountEntry>,
+
+      private readonly remitoService: RemitoService,
   ) {}
 
  
-  async create(dto: CreateSupplierPaymentDto) {
+//   async create(dto: CreateSupplierPaymentDto) {
+//   return this.ds.transaction(async manager => {
+//     // const supplier = await manager.findOneByOrFail(Supplier, {
+//     //   id: dto.supplierId,
+//     // });
+
+//     // if (supplier.totalDebtCache <= 0) {
+//     //   throw new BadRequestException('El proveedor no tiene deuda');
+//     //}
+
+//     //ref
+//     const supplier = await manager.findOneByOrFail(Supplier, { id: dto.supplierId });
+
+// const debtBefore = supplier.totalDebtCache; // 👈 snapshot previo
+
+// if (debtBefore <= 0) {
+//   throw new BadRequestException('El proveedor no tiene deuda');
+// }
+
+
+//     // 🔹 Buscar caja abierta automáticamente
+//     const cashRegister = await manager.findOne(CashRegister, {
+//       where: { closedAt: IsNull() },
+//     });
+
+//     if (!cashRegister) {
+//       throw new BadRequestException('No hay ninguna caja abierta');
+//     }
+
+//     // 🔹 Tomamos el menor entre lo que debe y lo que paga
+//     const amount = Math.min(dto.amount, supplier.totalDebtCache);
+
+//     // 🔹 Actualizamos deuda del proveedor
+//     supplier.totalDebtCache -= amount;
+//     await manager.save(supplier);
+
+//     // 🔹 Creamos el pago
+//     const payment = manager.create(SupplierPayment, {
+//       supplier,
+//       cashRegister,
+//       amount,
+//       paymentMethod: dto.paymentMethod,
+//       paymentDate: new Date(),
+//       status: SupplierPaymentStatus.COMPLETED,
+//     });
+
+//     await manager.save(payment);
+
+//     // 🔹 Asiento contable del proveedor (cuenta corriente)
+//     await manager.save(
+//       manager.create(SupplierAccountEntry, {
+//         supplier,
+//         supplierPayment: payment,
+//         type: SupplierAccountEntryType.PAYMENT,
+//         amount,
+//         balanceAfter: supplier.totalDebtCache,
+//         description: `Pago a proveedor ${supplier.name}`,
+//       }),
+//     );
+
+//     // 🔹 MOVIMIENTO DE CAJA (OUT = egreso)
+//     await manager.save(
+//       manager.create(CashMovement, {
+//         cashRegister,
+//         type: 'OUT',
+//         amount,
+//         reason: `Pago a proveedor ${supplier.name}`,
+//         relatedSupplierPayment: payment,
+//       }),
+//     );
+
+//     return {
+//   payment,
+//   summary: {
+//     pagoRealizado: amount,
+//     deudaAnterior: debtBefore,
+//     deudaActual: supplier.totalDebtCache,
+//   },
+// };
+//   });   
+// } 
+
+//ref
+async create(dto: CreateSupplierPaymentDto) {
   return this.ds.transaction(async manager => {
-    // const supplier = await manager.findOneByOrFail(Supplier, {
-    //   id: dto.supplierId,
-    // });
+    const supplier = await manager.findOneByOrFail(Supplier, {
+      id: dto.supplierId,
+    });
 
-    // if (supplier.totalDebtCache <= 0) {
-    //   throw new BadRequestException('El proveedor no tiene deuda');
-    //}
+    const debtBefore = Number(supplier.totalDebtCache);
 
-    //ref
-    const supplier = await manager.findOneByOrFail(Supplier, { id: dto.supplierId });
+    if (debtBefore <= 0) {
+      throw new BadRequestException('El proveedor no tiene deuda');
+    }
 
-const debtBefore = supplier.totalDebtCache; // 👈 snapshot previo
-
-if (debtBefore <= 0) {
-  throw new BadRequestException('El proveedor no tiene deuda');
-}
-
-
-    // 🔹 Buscar caja abierta automáticamente
+    // 🔹 Buscar caja abierta
     const cashRegister = await manager.findOne(CashRegister, {
       where: { closedAt: IsNull() },
     });
@@ -64,10 +142,10 @@ if (debtBefore <= 0) {
     }
 
     // 🔹 Tomamos el menor entre lo que debe y lo que paga
-    const amount = Math.min(dto.amount, supplier.totalDebtCache);
+    const amount = Math.min(dto.amount, debtBefore);
 
     // 🔹 Actualizamos deuda del proveedor
-    supplier.totalDebtCache -= amount;
+    supplier.totalDebtCache = debtBefore - amount;
     await manager.save(supplier);
 
     // 🔹 Creamos el pago
@@ -94,7 +172,7 @@ if (debtBefore <= 0) {
       }),
     );
 
-    // 🔹 MOVIMIENTO DE CAJA (OUT = egreso)
+    // 🔹 Movimiento de caja (OUT = egreso)
     await manager.save(
       manager.create(CashMovement, {
         cashRegister,
@@ -105,16 +183,59 @@ if (debtBefore <= 0) {
       }),
     );
 
+    // =========================
+    // ✅  NUEVO: GENERAR SNAPSHOT DE PAGO
+    // =========================
+    const snapshot = {
+      id: payment.id,
+      type: 'SUPPLIER_PAYMENT',
+      date: new Date(),
+
+      payment: {
+        id: payment.id,
+        amount: amount,
+        paymentMethod: dto.paymentMethod,
+        paymentDate: payment.paymentDate,
+      },
+
+      supplier: {
+        id: supplier.id,
+        name: supplier.name,
+        totalDebtCache: supplier.totalDebtCache.toFixed(2),
+      },
+
+      summary: {
+        pagoRealizado: amount,
+        deudaAnterior: debtBefore,
+        deudaActual: supplier.totalDebtCache,
+      },
+
+      // 👉 Muy importante para tu query:
+      _supplierId: supplier.id,
+    };
+
+    // =========================
+    // ✅ GUARDAR REMITO DEL PAGO
+    // =========================
+    await this.remitoService.create({
+      type: 'SUPPLIER_PAYMENT',
+      supplierId: supplier.id,
+      snapshot,
+    });
+
+    // =========================
+    // RESPUESTA FINAL
+    // =========================
     return {
-  payment,
-  summary: {
-    pagoRealizado: amount,
-    deudaAnterior: debtBefore,
-    deudaActual: supplier.totalDebtCache,
-  },
-};
-  });   
-} 
+      payment,
+      summary: {
+        pagoRealizado: amount,
+        deudaAnterior: debtBefore,
+        deudaActual: supplier.totalDebtCache,
+      },
+    };
+  });
+}
 
 
  

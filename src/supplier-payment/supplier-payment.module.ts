@@ -7,9 +7,11 @@ import { Supplier } from 'src/supplier/entities/supplier.entity';
 import { CashRegister } from 'src/cash-register/entities/cash-register.entity';
 import { CashMovement } from 'src/cash-movement/entities/cash-movement.entity';
 import { SupplierAccountEntry } from 'src/supplier-account-entry/entities/supplier-account-entry.entity';
+import { RemitoModule } from 'src/remito/remito.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SupplierPayment, Supplier, CashRegister, CashMovement, SupplierAccountEntry])],
+  imports: [TypeOrmModule.forFeature([SupplierPayment, Supplier, CashRegister, CashMovement, SupplierAccountEntry]),
+RemitoModule],
   controllers: [SupplierPaymentsController],
   providers: [SupplierPaymentsService],
 })
