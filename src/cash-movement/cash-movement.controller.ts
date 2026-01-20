@@ -1,12 +1,18 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { CashMovementsService } from './cash-movement.service';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { AuthGuard } from '@nestjs/passport';
+import { UseGuards } from '@nestjs/common';
 
 @ApiTags('Cash Movements')
 @Controller('cash-movements')
 export class CashMovementsController {
   constructor(private readonly movementsService: CashMovementsService) {}
 
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('superadmin')
   @Get()
   @ApiOperation({
     summary: 'Listar movimientos de caja',

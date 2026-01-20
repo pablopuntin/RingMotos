@@ -18,8 +18,8 @@ export class AuthController {
 
     
  
-@UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles('superadmin')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles('superadmin')
     @Post('register')
     @ApiOperation({summary: 'registro de usuarios'})
     @ApiBody({type: RegisterDto})
